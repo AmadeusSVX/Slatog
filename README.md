@@ -111,7 +111,7 @@ npm run build      # プロダクションビルド
 │   │   ├── avatar.ts              # D15 アバター3D表示 + ユーザーカラー
 │   │   ├── chat.ts                # D15 チャットUI + ユーザーカラー
 │   │   ├── chat-bubble.ts         # 3D吹き出し（SpriteMaterial + CanvasTexture）
-│   │   └── pen.ts                 # D15+D17 ペン描画（Line2 + LineMaterial）
+│   │   └── pen.ts                 # D15+D17+D21 ペン描画（Line2 + LineMaterial + 壁面クランプ）
 │   └── styles.css
 ├── server/
 │   ├── index.ts          # サーバエントリポイント + D20 TTLタイマー
@@ -192,6 +192,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] スクロール共有（LWW、100msデバウンス、DataChannel state経由）
 - [x] D16: 物理ルーム空間（壁・床・天井 + MeshStandardMaterial + ライティング + カメラ制限）
 - [x] D17: ペンストローク線幅改善（Line2 + LineMaterial、デフォルト5px）
+- [x] D21: ペンストローク壁面クランプ（描画座標をルーム内にクランプ、Zファイティング防止マージン）
 
 ### Phase 3: マルチプレイ同期
 

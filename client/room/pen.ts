@@ -1,5 +1,7 @@
-// D3, D15, D17: Pen stroke drawing in 3D space
+// D3, D15, D17, D21: Pen stroke drawing in 3D space
 // D17: Uses Line2 + LineMaterial for screen-space line width control.
+// D21: Raycasts against room wall meshes so strokes land on whichever wall the user faces.
+//      Display coordinates are clamped as safety net; original coords preserved in RoomState.
 // State-based sync: finishStroke() mutates RoomState only; broadcast is handled by main.ts.
 // reconcileUI calls renderStroke/removeStroke for incremental scene updates.
 
@@ -11,10 +13,30 @@ import { v4 as uuidv4 } from "uuid";
 import type { RoomState } from "../../shared/room-state.js";
 import type { StrokeEntry } from "../../shared/data-protocol.js";
 import type { SceneContext } from "./scene.js";
+import { ROOM_W, ROOM_H, ROOM_BACK_Z, ROOM_FRONT_Z } from "./scene.js";
 import { USER_COLORS } from "../../shared/colors.js";
 
 const DEFAULT_LINE_WIDTH = 5; // D17: screen-space pixels
-const DRAW_PLANE_Z = 10; // slightly in front of iframe (z=0)
+
+// D21: Z-fighting prevention margin (units inside from wall surface)
+const STROKE_CLAMP_OFFSET = 5;
+
+function clampStrokePoint(p: { x: number; y: number; z: number }): {
+  x: number;
+  y: number;
+  z: number;
+} {
+  const halfW = ROOM_W / 2;
+  const halfH = ROOM_H / 2;
+  return {
+    x: Math.max(-halfW + STROKE_CLAMP_OFFSET, Math.min(halfW - STROKE_CLAMP_OFFSET, p.x)),
+    y: Math.max(-halfH + STROKE_CLAMP_OFFSET, Math.min(halfH - STROKE_CLAMP_OFFSET, p.y)),
+    z: Math.max(
+      ROOM_BACK_Z + STROKE_CLAMP_OFFSET,
+      Math.min(ROOM_FRONT_Z - STROKE_CLAMP_OFFSET, p.z),
+    ),
+  };
+}
 
 export class PenManager {
   private scene: THREE.Scene;
@@ -23,7 +45,7 @@ export class PenManager {
   private roomState: RoomState;
   private myPeerId: string;
   private raycaster = new THREE.Raycaster();
-  private drawPlane: THREE.Plane;
+  private roomWalls: THREE.Group;
   private isDrawing = false;
   private currentPoints: THREE.Vector3[] = [];
   private currentLine: Line2 | null = null;
@@ -41,8 +63,8 @@ export class PenManager {
     this.roomState = roomState;
     this.myPeerId = myPeerId;
     this.container = ctx.container;
+    this.roomWalls = ctx.roomWalls;
     this.color = USER_COLORS[colorIndex % USER_COLORS.length];
-    this.drawPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -DRAW_PLANE_Z);
     this.resolution.set(ctx.container.clientWidth, ctx.container.clientHeight);
 
     this.pointerDownHandler = this.onPointerDown.bind(this);
@@ -182,6 +204,7 @@ export class PenManager {
     this.currentPoints = [];
   }
 
+  // D21: Raycast against room wall meshes to find the nearest wall surface hit
   private screenToWorld(e: PointerEvent): THREE.Vector3 | null {
     const rect = this.container.getBoundingClientRect();
     const ndc = new THREE.Vector2(
@@ -189,8 +212,17 @@ export class PenManager {
       -((e.clientY - rect.top) / rect.height) * 2 + 1,
     );
     this.raycaster.setFromCamera(ndc, this.camera);
-    const target = new THREE.Vector3();
-    return this.raycaster.ray.intersectPlane(this.drawPlane, target);
+    const hits = this.raycaster.intersectObjects(this.roomWalls.children, false);
+    if (hits.length === 0) return null;
+    // Offset the hit point slightly toward the camera (inside the room) to prevent z-fighting
+    const hit = hits[0];
+    const offset = hit.face
+      ? hit.face.normal
+          .clone()
+          .transformDirection(hit.object.matrixWorld)
+          .multiplyScalar(STROKE_CLAMP_OFFSET)
+      : new THREE.Vector3();
+    return hit.point.clone().add(offset);
   }
 }
 
@@ -202,7 +234,9 @@ function createLine2FromPoints(
 ): Line2 {
   const positions: number[] = [];
   for (const p of points) {
-    positions.push(p.x, p.y, p.z);
+    // D21: clamp display coordinates to room bounds as safety net
+    const c = clampStrokePoint(p);
+    positions.push(c.x, c.y, c.z);
   }
 
   const geometry = new LineGeometry();

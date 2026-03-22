@@ -12,9 +12,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // D16: Room dimensions in CSS-pixel units (matching existing coordinate system)
 // Back wall at z=0 (where iframe lives), extends toward camera (+z).
-const ROOM_W = 3000; // X: -1500 to +1500
-const ROOM_H = 1500; // Y: -750 to +750
-const ROOM_D = 2400; // Z: 0 to +2400
+export const ROOM_W = 3000; // X: -1500 to +1500
+export const ROOM_H = 1500; // Y: -750 to +750
+export const ROOM_D = 2400; // Z: 0 to +2400
+export const ROOM_BACK_Z = -10; // behind iframe depth mask at z=0
+export const ROOM_FRONT_Z = ROOM_BACK_Z + ROOM_D;
 
 // Camera/target clamp: 50-unit margin from each wall
 const CLAMP_X = [-1450, 1450] as const;
@@ -29,6 +31,7 @@ export interface SceneContext {
   cssRenderer: CSS3DRenderer;
   controls: OrbitControls;
   container: HTMLElement;
+  roomWalls: THREE.Group; // D21: raycast targets for pen drawing on any wall
   dispose(): void;
 }
 
@@ -83,7 +86,7 @@ export function createScene(container: HTMLElement): SceneContext {
   scene.add(dirLight);
 
   // --- D16: Room geometry ---
-  buildRoom(scene);
+  const roomWalls = buildRoom(scene);
 
   // --- Animation loop ---
   let animationId = 0;
@@ -121,14 +124,24 @@ export function createScene(container: HTMLElement): SceneContext {
     container.removeChild(cssRenderer.domElement);
   }
 
-  return { scene, cssScene, camera, webglRenderer, cssRenderer, controls, container, dispose };
+  return {
+    scene,
+    cssScene,
+    camera,
+    webglRenderer,
+    cssRenderer,
+    controls,
+    container,
+    roomWalls,
+    dispose,
+  };
 }
 
 // -----------------------------------------------------------------------
 // D16: Room construction — 5 planes (back wall omitted for CSS3D iframe)
 // -----------------------------------------------------------------------
 
-function buildRoom(scene: THREE.Scene): void {
+function buildRoom(scene: THREE.Scene): THREE.Group {
   const wallMat = new THREE.MeshStandardMaterial({
     color: 0xf0ede8,
     roughness: 0.85,
@@ -142,45 +155,47 @@ function buildRoom(scene: THREE.Scene): void {
 
   const halfW = ROOM_W / 2;
   const halfH = ROOM_H / 2;
-  // Room starts at z=-10 (behind iframe depth mask at z=0) to avoid z-fighting.
-  const backZ = -10;
-  const frontZ = backZ + ROOM_D;
-  const midZ = (backZ + frontZ) / 2;
+  const midZ = (ROOM_BACK_Z + ROOM_FRONT_Z) / 2;
+
+  const group = new THREE.Group();
 
   // Floor (y = -halfH, normal +Y)
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, -halfH, midZ);
-  scene.add(floor);
+  group.add(floor);
 
   // Ceiling (y = +halfH, normal -Y)
   const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D), wallMat);
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(0, halfH, midZ);
-  scene.add(ceiling);
+  group.add(ceiling);
 
   // Left wall (x = -halfW, normal +X)
   const left = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_D, ROOM_H), wallMat);
   left.rotation.y = Math.PI / 2;
   left.position.set(-halfW, 0, midZ);
-  scene.add(left);
+  group.add(left);
 
   // Right wall (x = +halfW, normal -X)
   const right = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_D, ROOM_H), wallMat);
   right.rotation.y = -Math.PI / 2;
   right.position.set(halfW, 0, midZ);
-  scene.add(right);
+  group.add(right);
 
-  // Front wall (z = frontZ, normal -Z)
+  // Front wall (z = ROOM_FRONT_Z, normal -Z)
   const front = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_H), wallMat);
   front.rotation.y = Math.PI;
-  front.position.set(0, 0, frontZ);
-  scene.add(front);
+  front.position.set(0, 0, ROOM_FRONT_Z);
+  group.add(front);
 
-  // Back wall (z = backZ, normal +Z)
+  // Back wall (z = ROOM_BACK_Z, normal +Z)
   const back = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_H), wallMat);
-  back.position.set(0, 0, backZ);
-  scene.add(back);
+  back.position.set(0, 0, ROOM_BACK_Z);
+  group.add(back);
+
+  scene.add(group);
+  return group;
 }
 
 // -----------------------------------------------------------------------
