@@ -1,19 +1,17 @@
-// D12: Hybrid iframe embedding with proxy check flow
-// 1. GET /api/proxy/check?url=... to determine embeddability
-// 2. embeddable=true  → iframe.src = original URL
-// 3. embeddable=false + supported=true → iframe.src = proxy URL
-// 4. embeddable=false + supported=false → show error
+// D12 + D13: Hybrid iframe embedding
+// Flow:
+// 1. D13: Try embed URL rewrite for known services (YouTube etc.) — no server call
+// 2. D12: GET /api/proxy/check → direct embed or header-stripping proxy or error
 
 import * as THREE from "three";
 import { CSS3DObject } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { SLATOG_CONFIG } from "../../shared/config.js";
 import { createDepthMask } from "./scene.js";
+import { tryEmbedRewrite } from "./embed-url.js";
 import type { SceneContext } from "./scene.js";
 
-// Iframe dimensions in 3D world units
 const IFRAME_WIDTH = 1024;
 const IFRAME_HEIGHT = 768;
-// CSS3DObject scale factor: DOM pixels → world units
 const CSS_SCALE = 1;
 
 export interface EmbedResult {
@@ -32,15 +30,22 @@ interface ProxyCheckResponse {
 }
 
 /**
- * Check URL embeddability via the server and create an iframe in 3D space.
- * Returns null if the URL is not supported (proxy off + not embeddable).
+ * Embed a web page in the 3D scene.
+ * 1. Try known-service embed URL rewrite (D13) — client-side, no server call
+ * 2. Fall back to proxy/check flow (D12)
  */
 export async function embedWebPage(
   ctx: SceneContext,
   urlKey: string,
   onError: (msg: string) => void,
 ): Promise<EmbedResult | null> {
-  // --- Check embeddability ---
+  // --- D13: Try embed URL rewrite first ---
+  const embedUrl = tryEmbedRewrite(urlKey);
+  if (embedUrl) {
+    return createIframeIn3D(ctx, embedUrl);
+  }
+
+  // --- D12: Proxy check flow ---
   let checkResult: ProxyCheckResponse;
   try {
     const res = await fetch(
@@ -61,10 +66,11 @@ export async function embedWebPage(
     return null;
   }
 
-  // Determine iframe src
   const iframeSrc = checkResult.embeddable ? checkResult.url : checkResult.proxyUrl!;
+  return createIframeIn3D(ctx, iframeSrc);
+}
 
-  // --- Create iframe DOM element ---
+function createIframeIn3D(ctx: SceneContext, iframeSrc: string): EmbedResult {
   const wrapper = document.createElement("div");
   wrapper.style.width = `${IFRAME_WIDTH}px`;
   wrapper.style.height = `${IFRAME_HEIGHT}px`;
@@ -79,15 +85,14 @@ export async function embedWebPage(
   iframe.style.height = "100%";
   iframe.style.border = "none";
   iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups");
+  iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
   wrapper.appendChild(iframe);
 
-  // --- CSS3DObject ---
   const cssObject = new CSS3DObject(wrapper);
   cssObject.position.set(0, 0, 0);
   cssObject.scale.setScalar(CSS_SCALE);
   ctx.cssScene.add(cssObject);
 
-  // --- Depth mask (FS-2) ---
   const maskWidth = IFRAME_WIDTH * CSS_SCALE;
   const maskHeight = IFRAME_HEIGHT * CSS_SCALE;
   const depthMask = createDepthMask(maskWidth, maskHeight, cssObject.position);
@@ -103,5 +108,4 @@ export async function embedWebPage(
   return { cssObject, depthMask, iframe, dispose };
 }
 
-/** Width/height constants exported for scroll sync and other modules */
 export { IFRAME_WIDTH, IFRAME_HEIGHT };

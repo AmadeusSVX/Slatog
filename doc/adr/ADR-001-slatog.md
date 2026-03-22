@@ -500,6 +500,51 @@ Node.js プロセス
 
 **根拠**: プロキシはサーバ負荷を増加させるため、デフォルトOFFとする。iframe直接埋め込みが可能なサイト（ドキュメント系、成功率70%）はプロキシ不要で動作する。プロキシが必要な運用環境でのみ有効化することで、サーバコストを制御可能にする。将来のマルチプラットフォーム展開（Quest VR等）ではブラウザ拡張に依存できないため、サーバサイドプロキシが唯一の汎用的解決策である。
 
+### D13: oEmbed / 埋め込みURL変換 — ヘッダ除去プロキシとの責務分離
+
+D12のヘッダ除去プロキシ（`SLATOG_PROXY=1`）は、iframe埋め込みを拒否するサイトの応答ヘッダを除去してiframe表示を強制する機能である。一方、YouTube・X(Twitter)・Spotify等のサービスは、**閲覧用URL（`youtube.com/watch?v=...`）自体がiframeを拒否していても、別途iframe埋め込み専用URL（`youtube.com/embed/...`）を公式に提供している**。この2つは本質的に異なる機能であり、混同してはならない。
+
+**2つのプロキシ機能の分類**:
+
+| 機能 | 目的 | サーバ負荷 | 有効化条件 |
+|------|------|-----------|-----------|
+| **埋め込みURL変換**（D13） | 閲覧URLを公式embed URLに変換 | なし（クライアント側URL書換のみ） | 常時有効 |
+| **ヘッダ除去プロキシ**（D12） | iframe拒否ヘッダをサーバ側で除去 | あり（HTMLフェッチ+書換） | `SLATOG_PROXY=1` |
+
+**埋め込みURL変換の判定フロー（D12を拡張）**:
+
+```
+1. クライアントがURL入力
+2. クライアント側で既知サービスの埋め込みURL変換を試行
+   YouTube: youtube.com/watch?v=ID → youtube.com/embed/ID
+   等のパターンマッチ
+3a. 変換成功 → iframe.src = 変換後URL（直接埋め込み、プロキシ不要）
+3b. 変換不可 → 従来のD12フロー（proxy/check → 直接 or プロキシ or エラー）
+```
+
+**既知サービスの変換ルール（クライアント側、サーバ不要）**:
+
+```
+YouTube:
+  youtube.com/watch?v={ID}         → youtube.com/embed/{ID}
+  youtu.be/{ID}                    → youtube.com/embed/{ID}
+  youtube.com/shorts/{ID}          → youtube.com/embed/{ID}
+
+（将来追加候補）
+Spotify:
+  open.spotify.com/track/{ID}      → open.spotify.com/embed/track/{ID}
+Vimeo:
+  vimeo.com/{ID}                   → player.vimeo.com/video/{ID}
+```
+
+**設計原則**:
+
+- **埋め込みURL変換はクライアント側のみで完結する**。サーバへのリクエストは発生しない（`proxy/check`も不要）。変換後URLは各サービスが公式に提供するiframe対応URLであり、`X-Frame-Options`による拒否は発生しない。
+- **変換ルールはホワイトリスト方式**。未知のサービスには適用せず、D12の従来フロー（`proxy/check`）にフォールバックする。
+- **ヘッダ除去プロキシ（D12）は変換不可能なサイト専用**。公式embed URLが存在するサービスにはプロキシを使わない。
+
+**根拠**: YouTube等のサービスはiframeによる閲覧URLの直接埋め込みを拒否するが、埋め込み専用URLを公式に提供している。この場合、ヘッダ除去プロキシは不要であるだけでなく、プロキシ経由ではCSP/CORS制約によりプレーヤーが正常動作しない。公式embed URLへの変換はサーバ負荷ゼロかつ互換性が最も高い解決策である。
+
 **深度整合（FS-2結果の反映）**:
 
 iframe（CSS3DObject）とWebGLオブジェクトの深度整合には、depth maskテクニックを使用する:

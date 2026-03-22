@@ -89,7 +89,8 @@ npm run build      # プロダクションビルド
 │   │   ├── index.html
 │   │   ├── main.ts                # ルームエントリポイント（全モジュール統合）
 │   │   ├── scene.ts               # Three.js二重レンダラー構成 + depth mask
-│   │   ├── iframe-embed.ts        # D12 ハイブリッドiframe埋め込み
+│   │   ├── iframe-embed.ts        # D12+D13 ハイブリッドiframe埋め込み
+│   │   ├── embed-url.ts           # D13 既知サービスembed URL変換
 │   │   ├── scroll-sync.ts         # D4 スクロール共有（LWW + 100msデバウンス）
 │   │   ├── signaling-client.ts    # WebSocketシグナリングクライアント
 │   │   ├── peer-manager.ts        # WebRTC PeerConnection管理
