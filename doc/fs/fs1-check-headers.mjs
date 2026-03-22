@@ -27,7 +27,11 @@ const SITES = [
   { category: "SNS/コミュニティ", name: "Bluesky", url: "https://bsky.app" },
 
   // ドキュメント/Wiki (10件)
-  { category: "ドキュメント/Wiki", name: "Wikipedia", url: "https://en.wikipedia.org/wiki/Main_Page" },
+  {
+    category: "ドキュメント/Wiki",
+    name: "Wikipedia",
+    url: "https://en.wikipedia.org/wiki/Main_Page",
+  },
   { category: "ドキュメント/Wiki", name: "MDN Web Docs", url: "https://developer.mozilla.org" },
   { category: "ドキュメント/Wiki", name: "GitHub", url: "https://github.com" },
   { category: "ドキュメント/Wiki", name: "GitLab", url: "https://gitlab.com" },
@@ -57,10 +61,18 @@ const SITES = [
   { category: "技術ブログ/個人サイト", name: "Qiita", url: "https://qiita.com" },
   { category: "技術ブログ/個人サイト", name: "Hashnode", url: "https://hashnode.com" },
   { category: "技術ブログ/個人サイト", name: "CSS-Tricks", url: "https://css-tricks.com" },
-  { category: "技術ブログ/個人サイト", name: "Smashing Magazine", url: "https://www.smashingmagazine.com" },
+  {
+    category: "技術ブログ/個人サイト",
+    name: "Smashing Magazine",
+    url: "https://www.smashingmagazine.com",
+  },
   { category: "技術ブログ/個人サイト", name: "freeCodeCamp", url: "https://www.freecodecamp.org" },
   { category: "技術ブログ/個人サイト", name: "web.dev", url: "https://web.dev" },
-  { category: "技術ブログ/個人サイト", name: "Hatenablog (example)", url: "https://blog.hatena.ne.jp" },
+  {
+    category: "技術ブログ/個人サイト",
+    name: "Hatenablog (example)",
+    url: "https://blog.hatena.ne.jp",
+  },
 ];
 
 async function checkSite(site) {
@@ -105,7 +117,9 @@ async function checkSite(site) {
       const allowsAny = tokens.some((t) => t === "*");
       if (!allowsAny) {
         embeddable = "NO";
-        reason = reason ? `${reason} + frame-ancestors: ${frameAncestors.trim()}` : `frame-ancestors: ${frameAncestors.trim()}`;
+        reason = reason
+          ? `${reason} + frame-ancestors: ${frameAncestors.trim()}`
+          : `frame-ancestors: ${frameAncestors.trim()}`;
       }
     }
 
@@ -140,7 +154,9 @@ async function checkSite(site) {
         const allowsAny = tokens.some((t) => t === "*");
         if (!allowsAny) {
           embeddable = "NO";
-          reason = reason ? `${reason} + frame-ancestors: ${getFrameAncestors.trim()}` : `frame-ancestors: ${getFrameAncestors.trim()}`;
+          reason = reason
+            ? `${reason} + frame-ancestors: ${getFrameAncestors.trim()}`
+            : `frame-ancestors: ${getFrameAncestors.trim()}`;
         }
       }
 
@@ -204,7 +220,7 @@ async function main() {
     const catResults = results.filter((r) => r.category === cat);
     for (const r of catResults) {
       console.log(
-        `| ${r.name} | ${r.status} | ${r.xFrameOptions} | ${r.frameAncestors} | ${r.embeddable} | ${r.reason} |`
+        `| ${r.name} | ${r.status} | ${r.xFrameOptions} | ${r.frameAncestors} | ${r.embeddable} | ${r.reason} |`,
       );
       if (r.embeddable === "YES") totalYes++;
       else if (r.embeddable === "NO") totalNo++;
@@ -227,13 +243,18 @@ async function main() {
   if (parseFloat(successRate) >= 70) {
     console.log("判定: CSS3DRenderer + iframe方式で進行");
   } else if (parseFloat(successRate) >= 40) {
-    console.log("判定: iframe方式を主軸としつつ、フォールバック（プロキシ or スクリーンショット）を並行実装");
+    console.log(
+      "判定: iframe方式を主軸としつつ、フォールバック（プロキシ or スクリーンショット）を並行実装",
+    );
   } else {
     console.log("判定: プロキシ方式を主軸に切り替え。iframe方式は補助的手段に格下げ");
   }
 
   // Output JSON for programmatic use
-  const outputData = { results, summary: { total, yes: totalYes, no: totalNo, unknown: totalUnknown, successRate } };
+  const outputData = {
+    results,
+    summary: { total, yes: totalYes, no: totalNo, unknown: totalUnknown, successRate },
+  };
   const fs = await import("fs");
   fs.writeFileSync("doc/fs/fs1-results.json", JSON.stringify(outputData, null, 2));
   console.log("\n結果をdoc/fs/fs1-results.jsonに保存しました。");

@@ -33,13 +33,71 @@ body {
   margin-bottom: 2rem;
 }
 
-.url-form {
+/* D14: Username section */
+
+.username-section {
+  margin-bottom: 1.5rem;
+}
+
+.username-section label {
+  display: block;
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.4rem;
+}
+
+.username-row {
   display: flex;
   gap: 0.5rem;
+}
+
+.username-row input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #151520;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.username-row input:focus {
+  outline: none;
+  border-color: #5b8def;
+}
+
+.username-row button {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #5b8def;
+  border: 1px solid #5b8def;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.username-row button:hover {
+  background: #5b8def;
+  color: #fff;
+}
+
+.url-form {
   margin-bottom: 2.5rem;
 }
 
-.url-form input {
+.url-form label {
+  display: block;
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.4rem;
+}
+
+.url-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.url-input-row input {
   flex: 1;
   padding: 0.7rem 1rem;
   border: 1px solid #333;
@@ -49,12 +107,12 @@ body {
   font-size: 0.95rem;
 }
 
-.url-form input:focus {
+.url-input-row input:focus {
   outline: none;
   border-color: #5b8def;
 }
 
-.url-form button {
+.url-input-row button {
   padding: 0.7rem 1.5rem;
   background: #5b8def;
   color: #fff;
@@ -64,8 +122,25 @@ body {
   cursor: pointer;
 }
 
-.url-form button:hover {
+.url-input-row button:hover {
   background: #4a7de0;
+}
+
+/* D19: Inactive room styling */
+
+.room-card.inactive {
+  opacity: 0.7;
+  border-color: #1a1a25;
+}
+
+.restore-btn {
+  color: #e9a820 !important;
+  border-color: #e9a820 !important;
+}
+
+.restore-btn:hover {
+  background: #e9a820 !important;
+  color: #000 !important;
 }
 
 .rooms-section h2 {

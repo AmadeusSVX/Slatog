@@ -6,10 +6,10 @@
 
 ## 結果サマリー
 
-| Feasibility Study | 結果 |
-|---|---|
-| FS-1: iframe埋め込み成功率 | **18.0%** (9/50サイト) |
-| FS-2: CSS3D+WebGL前面描画 | **全項目PASS** (前面描画+深度整合をdepth maskで実現、入力イベント共存可、60fps維持) |
+| Feasibility Study          | 結果                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| FS-1: iframe埋め込み成功率 | **18.0%** (9/50サイト)                                                              |
+| FS-2: CSS3D+WebGL前面描画  | **全項目PASS** (前面描画+深度整合をdepth maskで実現、入力イベント共存可、60fps維持) |
 
 ## ADR-001判断マトリクスとの照合
 
@@ -73,17 +73,18 @@ FS-1: 成功率40%未満
 ### ペンストローク描画方式
 
 FS-2(修正後)の結果を踏まえ:
+
 - depth maskテクニックにより、WebGLのペンストロークとiframeの深度整合が可能
 - ADR-001の当初設計（WebGLRendererでストローク描画）をそのまま採用可能
 - iframe利用可能なサイトでは、CSS3D+WebGL重ね合わせ方式が完全に動作する
 
 ## 成果物一覧
 
-| ファイル | 内容 |
-|----------|------|
-| `doc/fs/fs1-check-headers.mjs` | FS-1調査スクリプト |
-| `doc/fs/fs1-results.json` | FS-1調査生データ (JSON) |
-| `doc/fs/fs1-report.md` | FS-1結果レポート |
-| `doc/fs/fs2-overlay-test.html` | FS-2検証用HTML |
-| `doc/fs/fs2-report.md` | FS-2結果レポート |
-| `doc/fs/fs-decision-report.md` | 本レポート（統合判断） |
+| ファイル                       | 内容                    |
+| ------------------------------ | ----------------------- |
+| `doc/fs/fs1-check-headers.mjs` | FS-1調査スクリプト      |
+| `doc/fs/fs1-results.json`      | FS-1調査生データ (JSON) |
+| `doc/fs/fs1-report.md`         | FS-1結果レポート        |
+| `doc/fs/fs2-overlay-test.html` | FS-2検証用HTML          |
+| `doc/fs/fs2-report.md`         | FS-2結果レポート        |
+| `doc/fs/fs-decision-report.md` | 本レポート（統合判断）  |

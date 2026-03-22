@@ -83,6 +83,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-1",
       peerName: "Alice",
+      userId: "user-alice",
     });
 
     const msg = await nextMsg();
@@ -106,6 +107,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-1",
       peerName: "Alice",
+      userId: "user-alice",
     });
     await c1.nextMsg(); // ROOM_JOINED
 
@@ -115,6 +117,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-2",
       peerName: "Bob",
+      userId: "user-bob",
     });
 
     const joinedMsg = await c2.nextMsg();
@@ -140,6 +143,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-1",
       peerName: "Alice",
+      userId: "user-alice",
     });
     await c1.nextMsg();
 
@@ -149,6 +153,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-2",
       peerName: "Bob",
+      userId: "user-bob",
     });
     await c2.nextMsg(); // ROOM_JOINED
     await c1.nextMsg(); // PEER_JOINED
@@ -170,6 +175,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "aaa-host",
       peerName: "Host",
+      userId: "user-host",
     });
     await c1.nextMsg(); // ROOM_JOINED
 
@@ -179,6 +185,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "bbb-peer",
       peerName: "Peer",
+      userId: "user-peer",
     });
     await c2.nextMsg(); // ROOM_JOINED
     await c1.nextMsg(); // PEER_JOINED
@@ -196,13 +203,14 @@ describe("Signaling Server", () => {
     }
   });
 
-  it("deletes room when last peer leaves", async () => {
+  it("keeps room as inactive when last peer leaves (D19)", async () => {
     const c1 = await createClient();
     sendMsg(c1.ws, {
       type: "JOIN_ROOM",
       urlKey: "https://example.com",
       peerId: "peer-1",
       peerName: "Alice",
+      userId: "user-alice",
     });
     await c1.nextMsg();
 
@@ -211,7 +219,11 @@ describe("Signaling Server", () => {
     // Give the server a moment to process
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(store.getAllUrls()).toHaveLength(0);
+    // D19: Session stays in store with peerCount=0
+    const urls = store.getAllUrls();
+    expect(urls).toHaveLength(1);
+    expect(urls[0].totalPeers).toBe(0);
+    expect(urls[0].hasActivePeers).toBe(false);
   });
 
   it("relays SDP offers/answers between peers", async () => {
@@ -221,6 +233,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-1",
       peerName: "Alice",
+      userId: "user-alice",
     });
     await c1.nextMsg();
 
@@ -230,6 +243,7 @@ describe("Signaling Server", () => {
       urlKey: "https://example.com",
       peerId: "peer-2",
       peerName: "Bob",
+      userId: "user-bob",
     });
     await c2.nextMsg(); // ROOM_JOINED
     await c1.nextMsg(); // PEER_JOINED

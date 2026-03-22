@@ -1,4 +1,4 @@
-// D3: Avatar 3D representation and position sync
+// D3, D15: Avatar 3D representation and position sync
 // Each peer is represented as a simple mesh in the 3D scene.
 // Local avatar position is broadcast at 20Hz via unreliable DataChannel.
 
@@ -6,13 +6,10 @@ import * as THREE from "three";
 import type { PeerManager } from "./peer-manager.js";
 import type { SceneContext } from "./scene.js";
 import type { AvatarPosData } from "../../shared/data-protocol.js";
+import { USER_COLORS } from "../../shared/colors.js";
 
 const SEND_INTERVAL_MS = 50; // 20Hz
 const AVATAR_RADIUS = 30;
-const AVATAR_COLORS = [
-  0x5b8def, 0xef5b5b, 0x5bef8d, 0xefcf5b, 0xcf5bef, 0x5befef, 0xef8d5b, 0x8d5bef, 0xef5bcf,
-  0x5bef5b,
-];
 const NAME_SPRITE_Y_OFFSET = 50;
 
 interface RemoteAvatar {
@@ -30,7 +27,6 @@ export class AvatarManager {
   private localRotY = 0;
   private remoteAvatars = new Map<string, RemoteAvatar>();
   private sendTimer: ReturnType<typeof setInterval> | null = null;
-  private colorIndex = 0;
 
   constructor(ctx: SceneContext, peerManager: PeerManager, myPeerId: string) {
     this.scene = ctx.scene;
@@ -39,28 +35,25 @@ export class AvatarManager {
     this.startSending();
   }
 
-  /** Update local avatar position (called from controls/camera) */
   setLocalPosition(x: number, y: number, z: number, rotY: number): void {
     this.localPos.set(x, y, z);
     this.localRotY = rotY;
   }
 
-  /** Add a remote peer's avatar to the scene */
-  addPeer(peerId: string, peerName: string): void {
+  /** D15: colorIndex from USER_COLORS palette */
+  addPeer(peerId: string, peerName: string, colorIndex = 0): void {
     if (this.remoteAvatars.has(peerId)) return;
 
-    const color = AVATAR_COLORS[this.colorIndex % AVATAR_COLORS.length];
-    this.colorIndex++;
+    const color = new THREE.Color(USER_COLORS[colorIndex % USER_COLORS.length]);
 
-    // Simple sphere avatar
     const geometry = new THREE.SphereGeometry(AVATAR_RADIUS, 16, 12);
     const material = new THREE.MeshLambertMaterial({ color });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(0, 200, 600);
     this.scene.add(mesh);
 
-    // Name label sprite
-    const nameSprite = createNameSprite(peerName, color);
+    const colorHex = USER_COLORS[colorIndex % USER_COLORS.length];
+    const nameSprite = createNameSprite(peerName, colorHex);
     nameSprite.position.copy(mesh.position);
     nameSprite.position.y += NAME_SPRITE_Y_OFFSET;
     this.scene.add(nameSprite);
@@ -73,7 +66,6 @@ export class AvatarManager {
     });
   }
 
-  /** Remove a peer's avatar from the scene */
   removePeer(peerId: string): void {
     const avatar = this.remoteAvatars.get(peerId);
     if (!avatar) return;
@@ -86,7 +78,6 @@ export class AvatarManager {
     this.remoteAvatars.delete(peerId);
   }
 
-  /** Handle incoming avatar position from a remote peer */
   handleRemotePosition(msg: AvatarPosData): void {
     const avatar = this.remoteAvatars.get(msg.peerId);
     if (!avatar) return;
@@ -94,7 +85,6 @@ export class AvatarManager {
     avatar.targetRotY = msg.rotY;
   }
 
-  /** Call each frame to interpolate remote avatar positions */
   update(): void {
     for (const [, avatar] of this.remoteAvatars) {
       avatar.mesh.position.lerp(avatar.targetPos, 0.2);
@@ -104,7 +94,6 @@ export class AvatarManager {
     }
   }
 
-  /** Get a remote avatar's mesh position (for chat bubble placement) */
   getPeerPosition(peerId: string): THREE.Vector3 | null {
     return this.remoteAvatars.get(peerId)?.mesh.position ?? null;
   }
@@ -115,8 +104,6 @@ export class AvatarManager {
       this.removePeer(peerId);
     }
   }
-
-  // --- Private ---
 
   private startSending(): void {
     this.sendTimer = setInterval(() => {
@@ -134,8 +121,7 @@ export class AvatarManager {
   }
 }
 
-/** Create a text sprite for a peer's name label */
-function createNameSprite(name: string, color: number): THREE.Sprite {
+function createNameSprite(name: string, color: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 64;
@@ -143,7 +129,7 @@ function createNameSprite(name: string, color: number): THREE.Sprite {
   ctx.font = "bold 28px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
+  ctx.fillStyle = color;
   ctx.fillText(name, 128, 32);
 
   const texture = new THREE.CanvasTexture(canvas);

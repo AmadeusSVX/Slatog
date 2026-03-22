@@ -1,4 +1,4 @@
-// D11: KV interface + InMemoryRoomStore implementation
+// D11, D18, D20: KV interface + InMemoryRoomStore implementation
 
 export interface SessionData {
   roomId: string;
@@ -7,12 +7,15 @@ export interface SessionData {
   hostPeerId: string;
   peerCount: number;
   createdAt: number;
+  stateCache: string | null; // D18: RoomState JSON serialized
+  stateUpdatedAt: number | null; // D18: last cache update time (Unix ms)
 }
 
 export interface UrlSummary {
   urlKey: string;
   totalPeers: number;
   sessionCount: number;
+  hasActivePeers: boolean; // D19
 }
 
 export interface RoomStore {
@@ -21,6 +24,13 @@ export interface RoomStore {
   deleteSession(roomId: string): void;
   getSessionsByUrl(urlKey: string): SessionData[];
   getAllUrls(): UrlSummary[];
+
+  // D18: State cache
+  setStateCache(roomId: string, stateJson: string): void;
+  getStateCache(roomId: string): string | null;
+
+  // D20: TTL-based cleanup
+  deleteExpiredSessions(ttlMs: number): number;
 }
 
 export class InMemoryRoomStore implements RoomStore {
@@ -72,9 +82,48 @@ export class InMemoryRoomStore implements RoomStore {
       for (const id of roomIds) {
         totalPeers += this.sessions.get(id)!.peerCount;
       }
-      result.push({ urlKey, totalPeers, sessionCount: roomIds.size });
+      result.push({
+        urlKey,
+        totalPeers,
+        sessionCount: roomIds.size,
+        hasActivePeers: totalPeers > 0, // D19
+      });
     }
-    result.sort((a, b) => b.totalPeers - a.totalPeers);
+    // D19: Active first (desc), then by totalPeers desc
+    result.sort((a, b) => {
+      if (a.hasActivePeers !== b.hasActivePeers) return a.hasActivePeers ? -1 : 1;
+      return b.totalPeers - a.totalPeers;
+    });
     return result;
+  }
+
+  // D18: Store state cache
+  setStateCache(roomId: string, stateJson: string): void {
+    const session = this.sessions.get(roomId);
+    if (session) {
+      session.stateCache = stateJson;
+      session.stateUpdatedAt = Date.now();
+    }
+  }
+
+  // D18: Retrieve state cache
+  getStateCache(roomId: string): string | null {
+    return this.sessions.get(roomId)?.stateCache ?? null;
+  }
+
+  // D20: Delete expired inactive sessions
+  deleteExpiredSessions(ttlMs: number): number {
+    const now = Date.now();
+    let deleted = 0;
+    for (const [roomId, session] of this.sessions) {
+      if (session.peerCount === 0) {
+        const baseTime = session.stateUpdatedAt ?? session.createdAt;
+        if (now - baseTime > ttlMs) {
+          this.deleteSession(roomId);
+          deleted++;
+        }
+      }
+    }
+    return deleted;
   }
 }

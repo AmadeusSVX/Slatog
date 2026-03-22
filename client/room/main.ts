@@ -22,6 +22,8 @@ import type {
   RoomStateSnapshot,
 } from "../../shared/data-protocol.js";
 import { v4 as uuidv4 } from "uuid";
+import { LocalStorageAuthProvider } from "../auth.js";
+import { USER_COLORS, pickColorIndex } from "../../shared/colors.js";
 
 // --- Extract URL key from query params ---
 const params = new URLSearchParams(window.location.search);
@@ -37,15 +39,22 @@ if (!urlKey) {
   throw new Error("No URL key provided");
 }
 
+// --- D14: User identity ---
+const auth = new LocalStorageAuthProvider();
+const userIdentity = auth.getUserIdentity();
+
 // --- Room state (single source of truth) ---
 const myPeerId = uuidv4();
-const myPeerName = `User-${myPeerId.slice(0, 4)}`;
+const myPeerName = userIdentity.display_name;
+const myUserId = userIdentity.user_id;
 let roomId = "";
 let hostPeerId = "";
 const peerNames = new Map<string, string>();
+const peerColorIndices = new Map<string, number>(); // D15: peer → color_index
 const roomState = new RoomState(urlKey);
 let pendingSnapshot: StateSnapshotData | null = null;
 let sceneReady = false;
+let myColorIndex = 0; // D15: will be assigned on room join
 
 // --- UI setup ---
 const app = document.getElementById("app")!;
@@ -90,7 +99,9 @@ function updatePeerList(): void {
       const name =
         id === myPeerId ? `${myPeerName} (あなた)` : (peerNames.get(id) ?? id.slice(0, 8));
       const isHost = id === hostPeerId;
-      return `<div class="peer-item${isHost ? " host" : ""}">${escapeHtml(name)}</div>`;
+      const colorIdx = id === myPeerId ? myColorIndex : (peerColorIndices.get(id) ?? 0);
+      const color = USER_COLORS[colorIdx];
+      return `<div class="peer-item${isHost ? " host" : ""}" style="color:${color}">${escapeHtml(name)}</div>`;
     })
     .join("");
 }
@@ -157,19 +168,17 @@ roomState.setOnChange(scheduleBroadcast);
 
 const signaling = new SignalingClient(SLATOG_CONFIG.WS_SIGNALING, handleSignalingMessage);
 
-const peerManager = new PeerManager(
-  signaling,
-  handleDataChannelMessage,
-  (peerId, state) => {
-    log(`Peer ${peerNames.get(peerId) ?? peerId.slice(0, 8)} ${state}`);
-    updatePeerList();
-  },
-);
+const peerManager = new PeerManager(signaling, handleDataChannelMessage, (peerId, state) => {
+  log(`Peer ${peerNames.get(peerId) ?? peerId.slice(0, 8)} ${state}`);
+  updatePeerList();
+});
 
 // When state channel opens, send current state to all peers
 peerManager.setOnChannelOpen((peerId, channel) => {
   if (channel === "state") {
-    log(`State channel open with ${peerNames.get(peerId) ?? peerId.slice(0, 8)}, broadcasting state`);
+    log(
+      `State channel open with ${peerNames.get(peerId) ?? peerId.slice(0, 8)}, broadcasting state`,
+    );
     doBroadcast();
   }
 });
@@ -181,7 +190,9 @@ function handleDataChannelMessage(_peerId: string, channel: string, data: string
       if (msg.type === "AVATAR_POS") {
         avatarMgr?.handleRemotePosition(msg);
       }
-    } catch { /* ignore malformed */ }
+    } catch {
+      /* ignore malformed */
+    }
     return;
   }
 
@@ -192,7 +203,9 @@ function handleDataChannelMessage(_peerId: string, channel: string, data: string
       if (msg.type === "STATE_SNAPSHOT") {
         handleIncomingSnapshot(msg);
       }
-    } catch { /* ignore malformed */ }
+    } catch {
+      /* ignore malformed */
+    }
   }
 }
 
@@ -286,6 +299,12 @@ function handleSignalingMessage(msg: ServerMessage): void {
       hostPeerId = msg.newHostPeerId;
       log(`Host migrated to ${peerNames.get(hostPeerId) ?? hostPeerId.slice(0, 8)}`);
       updatePeerList();
+      // D18: New host takes over state cache sync
+      if (hostPeerId === myPeerId) {
+        startStateCacheSync();
+      } else {
+        stopStateCacheSync();
+      }
       break;
     case "ERROR":
       log(`ERROR: ${msg.message}`);
@@ -299,20 +318,41 @@ function handleRoomJoined(id: string, existingPeers: PeerInfo[], host: string): 
   log(`Joined room ${roomId} (host: ${host.slice(0, 8)})`);
   peerNames.set(myPeerId, myPeerName);
 
+  // D15: Assign colors to existing peers first, then self
+  const usedIndices = new Set<number>();
   for (const peer of existingPeers) {
     peerNames.set(peer.peerId, peer.peerName);
+    const ci = pickColorIndex(usedIndices);
+    peerColorIndices.set(peer.peerId, ci);
+    usedIndices.add(ci);
     log(`Connecting to existing peer ${peer.peerName}`);
     peerManager.createOffer(peer.peerId);
   }
+  myColorIndex = pickColorIndex(usedIndices);
+  usedIndices.add(myColorIndex);
 
   updatePeerList();
   initScene();
+
+  // D18: Start state cache sync if we are host
+  if (hostPeerId === myPeerId) {
+    startStateCacheSync();
+  }
+
+  // D19: If no other peers exist, try to restore state from server cache
+  if (existingPeers.length === 0) {
+    restoreStateFromCache();
+  }
 }
 
 function handlePeerJoined(peerId: string, peerName: string): void {
   peerNames.set(peerId, peerName);
-  log(`${peerName} joined`);
-  avatarMgr?.addPeer(peerId, peerName);
+  // D15: Assign color
+  const usedIndices = new Set<number>([myColorIndex, ...peerColorIndices.values()]);
+  const ci = pickColorIndex(usedIndices);
+  peerColorIndices.set(peerId, ci);
+  log(`${peerName} joined (color: ${USER_COLORS[ci]})`);
+  avatarMgr?.addPeer(peerId, peerName, ci);
   updatePeerList();
 }
 
@@ -322,6 +362,7 @@ function handlePeerLeft(peerId: string): void {
   peerManager.removePeer(peerId);
   avatarMgr?.removePeer(peerId);
   peerNames.delete(peerId);
+  peerColorIndices.delete(peerId); // D15: Release color
   updatePeerList();
 }
 
@@ -336,9 +377,9 @@ async function initScene(): Promise<void> {
   log("3D scene initialized");
 
   avatarMgr = new AvatarManager(sceneCtx, peerManager, myPeerId);
-  chatMgr = new ChatManager(roomContainer, roomState, myPeerId, myPeerName);
+  chatMgr = new ChatManager(roomContainer, roomState, myPeerId, myPeerName, myColorIndex);
   bubbleMgr = new ChatBubbleManager(sceneCtx.scene, avatarMgr, myPeerId);
-  penMgr = new PenManager(sceneCtx, roomState, myPeerId);
+  penMgr = new PenManager(sceneCtx, roomState, myPeerId, myColorIndex);
 
   chatMgr.setOnNewMessage((msg) => {
     bubbleMgr?.showBubble(msg);
@@ -346,14 +387,20 @@ async function initScene(): Promise<void> {
 
   for (const [peerId, name] of peerNames) {
     if (peerId !== myPeerId) {
-      avatarMgr.addPeer(peerId, name);
+      const ci = peerColorIndices.get(peerId) ?? 0;
+      avatarMgr.addPeer(peerId, name, ci);
     }
   }
 
   // Animation loop for avatars and bubbles
   const camera = sceneCtx.camera;
   function frameLoop(): void {
-    avatarMgr?.setLocalPosition(camera.position.x, camera.position.y, camera.position.z, camera.rotation.y);
+    avatarMgr?.setLocalPosition(
+      camera.position.x,
+      camera.position.y,
+      camera.position.z,
+      camera.rotation.y,
+    );
     avatarMgr?.update();
     bubbleMgr?.setLocalPosition(camera.position);
     bubbleMgr?.update();
@@ -384,6 +431,67 @@ async function initScene(): Promise<void> {
   }
 }
 
+// ==========================================================================
+// D19: State restore from server cache
+// ==========================================================================
+
+async function restoreStateFromCache(): Promise<void> {
+  if (!roomId) return;
+  try {
+    const res = await fetch(`${SLATOG_CONFIG.API_BASE}/api/rooms/${roomId}/state`);
+    if (!res.ok) return; // No cache available
+    const data = await res.json();
+    if (data.stateJson) {
+      log("Restoring state from server cache...");
+      const snap = JSON.parse(data.stateJson);
+      const prevSnap = roomState.toSnapshot();
+      roomState.applySnapshot(snap);
+      const currSnap = roomState.toSnapshot();
+      reconcileUI(prevSnap, currSnap);
+      // Restore visual elements
+      chatMgr?.restoreHistory();
+      penMgr?.restoreStrokes();
+      log("State restored from cache");
+    }
+  } catch {
+    // Silently ignore restore failures
+  }
+}
+
+// ==========================================================================
+// D18: State cache — host periodically sends state to server
+// ==========================================================================
+
+const STATE_SYNC_INTERVAL_MS = 30_000; // 30 seconds
+let stateSyncTimer: ReturnType<typeof setInterval> | null = null;
+
+function startStateCacheSync(): void {
+  stopStateCacheSync();
+  stateSyncTimer = setInterval(sendStateCache, STATE_SYNC_INTERVAL_MS);
+}
+
+function stopStateCacheSync(): void {
+  if (stateSyncTimer) {
+    clearInterval(stateSyncTimer);
+    stateSyncTimer = null;
+  }
+}
+
+async function sendStateCache(): Promise<void> {
+  if (!roomId || hostPeerId !== myPeerId) return; // Only host sends
+  try {
+    const snapshot = roomState.toSnapshot();
+    const stateJson = JSON.stringify(snapshot);
+    await fetch(`${SLATOG_CONFIG.API_BASE}/api/rooms/${roomId}/state`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stateJson }),
+    });
+  } catch {
+    // Silently ignore cache upload failures
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -402,6 +510,7 @@ const checkOpen = setInterval(() => {
       urlKey,
       peerId: myPeerId,
       peerName: myPeerName,
+      userId: myUserId,
     });
     clearInterval(checkOpen);
     log("Joining room...");
@@ -412,8 +521,11 @@ const checkOpen = setInterval(() => {
 
 // Cleanup on unload
 window.addEventListener("beforeunload", () => {
+  // D18: Send final state cache before leaving
+  if (hostPeerId === myPeerId) sendStateCache();
   signaling.send({ type: "LEAVE_ROOM" });
   if (broadcastTimer) clearTimeout(broadcastTimer);
+  stopStateCacheSync();
   penMgr?.dispose();
   bubbleMgr?.dispose();
   chatMgr?.dispose();

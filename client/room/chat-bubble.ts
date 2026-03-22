@@ -39,11 +39,9 @@ export class ChatBubbleManager {
     this.localBubblePos = new THREE.Vector3(0, 200 + BUBBLE_Y_OFFSET, 600);
   }
 
-  /** Show a chat bubble for a message */
   showBubble(msg: ChatMessageEntry): void {
     const isLocal = msg.authorPeerId === this.myPeerId;
 
-    // Remove existing bubble for this peer
     if (isLocal) {
       this.removeLocalBubble();
     } else {
@@ -67,11 +65,9 @@ export class ChatBubbleManager {
     }
   }
 
-  /** Update positions and handle fade/expiry. Call each frame. */
   update(): void {
     const now = Date.now();
 
-    // Update local bubble
     if (this.localBubble) {
       this.localBubble.sprite.position.copy(this.localBubblePos);
       if (now >= this.localBubble.expireAt) {
@@ -84,18 +80,15 @@ export class ChatBubbleManager {
       }
     }
 
-    // Update remote bubbles
     for (let i = this.bubbles.length - 1; i >= 0; i--) {
       const bubble = this.bubbles[i];
 
-      // Position above avatar
       const avatarPos = this.avatars.getPeerPosition(bubble.peerId);
       if (avatarPos) {
         bubble.sprite.position.copy(avatarPos);
         bubble.sprite.position.y += BUBBLE_Y_OFFSET;
       }
 
-      // Fade out in last second
       if (now >= bubble.expireAt) {
         this.scene.remove(bubble.sprite);
         disposeBubbleSprite(bubble.sprite);
@@ -109,7 +102,6 @@ export class ChatBubbleManager {
     }
   }
 
-  /** Update local avatar position for bubble placement */
   setLocalPosition(pos: THREE.Vector3): void {
     this.localBubblePos.copy(pos);
     this.localBubblePos.y += BUBBLE_Y_OFFSET;
@@ -123,8 +115,6 @@ export class ChatBubbleManager {
     }
     this.bubbles = [];
   }
-
-  // --- Private ---
 
   private removeLocalBubble(): void {
     if (!this.localBubble) return;
@@ -149,12 +139,10 @@ function createBubbleSprite(text: string): THREE.Sprite {
   canvas.height = CANVAS_HEIGHT;
   const ctx = canvas.getContext("2d")!;
 
-  // Background
   ctx.fillStyle = BG_COLOR;
   roundRect(ctx, 4, 4, CANVAS_WIDTH - 8, CANVAS_HEIGHT - 8, 12);
   ctx.fill();
 
-  // Text
   ctx.font = FONT;
   ctx.fillStyle = TEXT_COLOR;
   ctx.textBaseline = "top";
@@ -186,7 +174,6 @@ function wrapText(text: string, charsPerLine: number, maxLines: number): string[
       lines.push(remaining);
       remaining = "";
     } else if (lines.length === maxLines - 1) {
-      // Last allowed line — truncate
       lines.push(remaining.slice(0, charsPerLine - 3) + "...");
       remaining = "";
     } else {

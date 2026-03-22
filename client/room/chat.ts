@@ -5,6 +5,7 @@
 import { v4 as uuidv4 } from "uuid";
 import type { RoomState } from "../../shared/room-state.js";
 import type { ChatMessageEntry } from "../../shared/data-protocol.js";
+import { USER_COLORS } from "../../shared/colors.js";
 
 const MAX_TEXT_LENGTH = 280;
 
@@ -14,6 +15,7 @@ export class ChatManager {
   private roomState: RoomState;
   private myPeerId: string;
   private myPeerName: string;
+  private myColorIndex: number; // D15
   private panel: HTMLElement;
   private messagesEl: HTMLElement;
   private inputEl: HTMLInputElement;
@@ -24,10 +26,12 @@ export class ChatManager {
     roomState: RoomState,
     myPeerId: string,
     myPeerName: string,
+    myColorIndex = 0,
   ) {
     this.roomState = roomState;
     this.myPeerId = myPeerId;
     this.myPeerName = myPeerName;
+    this.myColorIndex = myColorIndex;
 
     this.panel = document.createElement("div");
     this.panel.id = "chat-panel";
@@ -94,6 +98,7 @@ export class ChatManager {
       id: uuidv4(),
       authorPeerId: this.myPeerId,
       authorName: this.myPeerName,
+      colorIndex: this.myColorIndex, // D15
       text: text.slice(0, MAX_TEXT_LENGTH),
       timestamp: Date.now(),
     };
@@ -115,6 +120,9 @@ export class ChatManager {
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-msg-author";
     nameSpan.textContent = isMe ? "あなた" : msg.authorName;
+    // D15: Use user color for author name
+    const ci = msg.colorIndex ?? 0;
+    nameSpan.style.color = USER_COLORS[ci];
 
     const textSpan = document.createElement("span");
     textSpan.className = "chat-msg-text";

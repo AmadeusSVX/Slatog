@@ -7,6 +7,7 @@ export interface JoinRoomMsg {
   urlKey: string;
   peerId: string;
   peerName: string;
+  userId: string; // D14: persistent user identity
 }
 
 export interface LeaveRoomMsg {
@@ -52,6 +53,7 @@ export interface PeerJoinedMsg {
   type: "PEER_JOINED";
   peerId: string;
   peerName: string;
+  userId: string; // D14
 }
 
 export interface PeerLeftMsg {
@@ -95,6 +97,7 @@ export type ServerMessage =
 export interface PeerInfo {
   peerId: string;
   peerName: string;
+  userId: string; // D14
 }
 
 export const MAX_PEERS_PER_ROOM = 10;

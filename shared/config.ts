@@ -4,6 +4,7 @@
 export const SLATOG_CONFIG = {
   API_BASE: import.meta.env.VITE_API_BASE ?? "",
   WS_SIGNALING:
-    import.meta.env.VITE_WS_SIGNALING ?? `ws://${globalThis.location?.host ?? "localhost:3000"}/signaling`,
+    import.meta.env.VITE_WS_SIGNALING ??
+    `ws://${globalThis.location?.host ?? "localhost:3000"}/signaling`,
   STUN_SERVERS: ["stun:stun.l.google.com:19302"],
 } as const;

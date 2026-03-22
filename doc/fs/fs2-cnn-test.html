@@ -1,286 +1,346 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>FS-2: iframe埋め込みブロック時の挙動テスト (CNN)</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { overflow: hidden; background: #1a1a2e; font-family: sans-serif; }
-  #info {
-    position: fixed; top: 10px; left: 10px; z-index: 1000;
-    background: rgba(0,0,0,0.8); color: #fff; padding: 12px 16px;
-    border-radius: 8px; font-size: 13px; line-height: 1.6;
-    max-width: 500px;
-  }
-  #info h3 { margin-bottom: 6px; color: #4fc3f7; }
-  #iframe-status { margin-top: 8px; padding: 8px; border-radius: 4px; background: rgba(255,152,0,0.3); }
-  #fps { position: fixed; top: 10px; right: 10px; z-index: 1000;
-    background: rgba(0,0,0,0.8); color: #4fc3f7; padding: 8px 12px;
-    border-radius: 8px; font-size: 14px; font-family: monospace; }
-  #controls {
-    position: fixed; bottom: 10px; left: 10px; z-index: 1000;
-    background: rgba(0,0,0,0.8); color: #fff; padding: 12px 16px;
-    border-radius: 8px; font-size: 13px;
-  }
-  #controls button {
-    margin: 4px; padding: 6px 12px; border: 1px solid #4fc3f7;
-    background: transparent; color: #4fc3f7; border-radius: 4px; cursor: pointer;
-  }
-  #controls button:hover { background: rgba(79,195,247,0.2); }
-  #controls button.active { background: rgba(79,195,247,0.4); }
-  #css3d-container, #webgl-container {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  }
-  #webgl-container { pointer-events: none; }
-</style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>FS-2: iframe埋め込みブロック時の挙動テスト (CNN)</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        background: #1a1a2e;
+        font-family: sans-serif;
+      }
+      #info {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1.6;
+        max-width: 500px;
+      }
+      #info h3 {
+        margin-bottom: 6px;
+        color: #4fc3f7;
+      }
+      #iframe-status {
+        margin-top: 8px;
+        padding: 8px;
+        border-radius: 4px;
+        background: rgba(255, 152, 0, 0.3);
+      }
+      #fps {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        color: #4fc3f7;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: monospace;
+      }
+      #controls {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      #controls button {
+        margin: 4px;
+        padding: 6px 12px;
+        border: 1px solid #4fc3f7;
+        background: transparent;
+        color: #4fc3f7;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      #controls button:hover {
+        background: rgba(79, 195, 247, 0.2);
+      }
+      #controls button.active {
+        background: rgba(79, 195, 247, 0.4);
+      }
+      #css3d-container,
+      #webgl-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #webgl-container {
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <h3>iframe埋め込みブロック時の挙動テスト</h3>
+      <div>比較対象:</div>
+      <div style="margin: 4px 0">
+        <span style="color: #ff4444">左: CNN</span> (frame-ancestors制限あり) /
+        <span style="color: #4fc3f7">右: Wikipedia</span> (制限なし)
+      </div>
+      <div id="iframe-status">ステータス: 読み込み中...</div>
+    </div>
+    <div id="fps">FPS: --</div>
+    <div id="controls">
+      カメラ操作: マウスドラッグで回転 / ホイールでズーム
+      <br />
+      <button id="btn-rotate">カメラ回転テスト</button>
+      <button id="btn-reset">カメラリセット</button>
+    </div>
 
-<div id="info">
-  <h3>iframe埋め込みブロック時の挙動テスト</h3>
-  <div>比較対象:</div>
-  <div style="margin: 4px 0;">
-    <span style="color:#ff4444;">左: CNN</span> (frame-ancestors制限あり) /
-    <span style="color:#4fc3f7;">右: Wikipedia</span> (制限なし)
-  </div>
-  <div id="iframe-status">ステータス: 読み込み中...</div>
-</div>
-<div id="fps">FPS: --</div>
-<div id="controls">
-  カメラ操作: マウスドラッグで回転 / ホイールでズーム
-  <br>
-  <button id="btn-rotate">カメラ回転テスト</button>
-  <button id="btn-reset">カメラリセット</button>
-</div>
+    <div id="css3d-container"></div>
+    <div id="webgl-container"></div>
 
-<div id="css3d-container"></div>
-<div id="webgl-container"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.183.2/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.183.2/examples/jsm/"
+        }
+      }
+    </script>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.183.2/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.183.2/examples/jsm/"
-  }
-}
-</script>
+    <script type="module">
+      import * as THREE from "three";
+      import { CSS3DRenderer, CSS3DObject } from "three/addons/renderers/CSS3DRenderer.js";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-<script type="module">
-import * as THREE from 'three';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        1,
+        5000,
+      );
+      camera.position.set(0, 0, 1800);
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 5000);
-camera.position.set(0, 0, 1800);
+      // --- CSS3DRenderer ---
+      const css3dRenderer = new CSS3DRenderer();
+      css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+      css3dRenderer.domElement.style.position = "absolute";
+      css3dRenderer.domElement.style.top = "0";
+      css3dRenderer.domElement.style.zIndex = "1";
+      document.getElementById("css3d-container").appendChild(css3dRenderer.domElement);
 
-// --- CSS3DRenderer ---
-const css3dRenderer = new CSS3DRenderer();
-css3dRenderer.setSize(window.innerWidth, window.innerHeight);
-css3dRenderer.domElement.style.position = 'absolute';
-css3dRenderer.domElement.style.top = '0';
-css3dRenderer.domElement.style.zIndex = '1';
-document.getElementById('css3d-container').appendChild(css3dRenderer.domElement);
+      // --- WebGLRenderer ---
+      const webglRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      webglRenderer.setSize(window.innerWidth, window.innerHeight);
+      webglRenderer.setPixelRatio(window.devicePixelRatio);
+      webglRenderer.domElement.style.position = "absolute";
+      webglRenderer.domElement.style.top = "0";
+      webglRenderer.domElement.style.zIndex = "2";
+      webglRenderer.domElement.style.pointerEvents = "none";
+      document.getElementById("webgl-container").appendChild(webglRenderer.domElement);
 
-// --- WebGLRenderer ---
-const webglRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-webglRenderer.setSize(window.innerWidth, window.innerHeight);
-webglRenderer.setPixelRatio(window.devicePixelRatio);
-webglRenderer.domElement.style.position = 'absolute';
-webglRenderer.domElement.style.top = '0';
-webglRenderer.domElement.style.zIndex = '2';
-webglRenderer.domElement.style.pointerEvents = 'none';
-document.getElementById('webgl-container').appendChild(webglRenderer.domElement);
+      // --- OrbitControls ---
+      const controls = new OrbitControls(camera, css3dRenderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.1;
+      controls.minDistance = 600;
+      controls.maxDistance = 4000;
 
-// --- OrbitControls ---
-const controls = new OrbitControls(camera, css3dRenderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.1;
-controls.minDistance = 600;
-controls.maxDistance = 4000;
+      const statusEl = document.getElementById("iframe-status");
 
-const statusEl = document.getElementById('iframe-status');
+      // ========== LEFT: CNN (blocked) ==========
+      const iframeCnn = document.createElement("iframe");
+      iframeCnn.src = "https://www.cnn.com";
+      iframeCnn.style.width = "800px";
+      iframeCnn.style.height = "600px";
+      iframeCnn.style.border = "3px solid #ff4444";
+      iframeCnn.style.borderRadius = "8px";
+      iframeCnn.style.background = "#222";
 
-// ========== LEFT: CNN (blocked) ==========
-const iframeCnn = document.createElement('iframe');
-iframeCnn.src = 'https://www.cnn.com';
-iframeCnn.style.width = '800px';
-iframeCnn.style.height = '600px';
-iframeCnn.style.border = '3px solid #ff4444';
-iframeCnn.style.borderRadius = '8px';
-iframeCnn.style.background = '#222';
+      // Label for CNN
+      const cnnLabel = document.createElement("div");
+      cnnLabel.style.width = "800px";
+      cnnLabel.style.padding = "8px";
+      cnnLabel.style.background = "#ff4444";
+      cnnLabel.style.color = "#fff";
+      cnnLabel.style.fontFamily = "sans-serif";
+      cnnLabel.style.fontSize = "18px";
+      cnnLabel.style.fontWeight = "bold";
+      cnnLabel.style.textAlign = "center";
+      cnnLabel.style.borderRadius = "8px 8px 0 0";
+      cnnLabel.textContent = "CNN (frame-ancestors restricted)";
 
-// Label for CNN
-const cnnLabel = document.createElement('div');
-cnnLabel.style.width = '800px';
-cnnLabel.style.padding = '8px';
-cnnLabel.style.background = '#ff4444';
-cnnLabel.style.color = '#fff';
-cnnLabel.style.fontFamily = 'sans-serif';
-cnnLabel.style.fontSize = '18px';
-cnnLabel.style.fontWeight = 'bold';
-cnnLabel.style.textAlign = 'center';
-cnnLabel.style.borderRadius = '8px 8px 0 0';
-cnnLabel.textContent = 'CNN (frame-ancestors restricted)';
+      const cnnContainer = document.createElement("div");
+      cnnContainer.appendChild(cnnLabel);
+      cnnContainer.appendChild(iframeCnn);
 
-const cnnContainer = document.createElement('div');
-cnnContainer.appendChild(cnnLabel);
-cnnContainer.appendChild(iframeCnn);
+      const cssCnn = new CSS3DObject(cnnContainer);
+      cssCnn.position.set(-280, 0, 0);
+      cssCnn.scale.set(0.5, 0.5, 0.5);
+      scene.add(cssCnn);
 
-const cssCnn = new CSS3DObject(cnnContainer);
-cssCnn.position.set(-280, 0, 0);
-cssCnn.scale.set(0.5, 0.5, 0.5);
-scene.add(cssCnn);
+      // ========== RIGHT: Wikipedia (allowed) ==========
+      const iframeWiki = document.createElement("iframe");
+      iframeWiki.src = "https://en.wikipedia.org/wiki/WebRTC";
+      iframeWiki.style.width = "800px";
+      iframeWiki.style.height = "600px";
+      iframeWiki.style.border = "3px solid #4fc3f7";
+      iframeWiki.style.borderRadius = "8px";
+      iframeWiki.style.background = "#fff";
 
-// ========== RIGHT: Wikipedia (allowed) ==========
-const iframeWiki = document.createElement('iframe');
-iframeWiki.src = 'https://en.wikipedia.org/wiki/WebRTC';
-iframeWiki.style.width = '800px';
-iframeWiki.style.height = '600px';
-iframeWiki.style.border = '3px solid #4fc3f7';
-iframeWiki.style.borderRadius = '8px';
-iframeWiki.style.background = '#fff';
+      const wikiLabel = document.createElement("div");
+      wikiLabel.style.width = "800px";
+      wikiLabel.style.padding = "8px";
+      wikiLabel.style.background = "#4fc3f7";
+      wikiLabel.style.color = "#fff";
+      wikiLabel.style.fontFamily = "sans-serif";
+      wikiLabel.style.fontSize = "18px";
+      wikiLabel.style.fontWeight = "bold";
+      wikiLabel.style.textAlign = "center";
+      wikiLabel.style.borderRadius = "8px 8px 0 0";
+      wikiLabel.textContent = "Wikipedia (no restriction)";
 
-const wikiLabel = document.createElement('div');
-wikiLabel.style.width = '800px';
-wikiLabel.style.padding = '8px';
-wikiLabel.style.background = '#4fc3f7';
-wikiLabel.style.color = '#fff';
-wikiLabel.style.fontFamily = 'sans-serif';
-wikiLabel.style.fontSize = '18px';
-wikiLabel.style.fontWeight = 'bold';
-wikiLabel.style.textAlign = 'center';
-wikiLabel.style.borderRadius = '8px 8px 0 0';
-wikiLabel.textContent = 'Wikipedia (no restriction)';
+      const wikiContainer = document.createElement("div");
+      wikiContainer.appendChild(wikiLabel);
+      wikiContainer.appendChild(iframeWiki);
 
-const wikiContainer = document.createElement('div');
-wikiContainer.appendChild(wikiLabel);
-wikiContainer.appendChild(iframeWiki);
+      const cssWiki = new CSS3DObject(wikiContainer);
+      cssWiki.position.set(280, 0, 0);
+      cssWiki.scale.set(0.5, 0.5, 0.5);
+      scene.add(cssWiki);
 
-const cssWiki = new CSS3DObject(wikiContainer);
-cssWiki.position.set(280, 0, 0);
-cssWiki.scale.set(0.5, 0.5, 0.5);
-scene.add(cssWiki);
+      // --- Detect iframe load/error ---
+      let cnnStatus = "loading";
+      let wikiStatus = "loading";
 
-// --- Detect iframe load/error ---
-let cnnStatus = 'loading';
-let wikiStatus = 'loading';
-
-function updateStatus() {
-  statusEl.innerHTML = `
+      function updateStatus() {
+        statusEl.innerHTML = `
     <b>CNN:</b> ${cnnStatus}<br>
     <b>Wikipedia:</b> ${wikiStatus}
   `;
-}
+      }
 
-iframeCnn.addEventListener('load', () => {
-  // "load" fires even when blocked — the iframe shows a blank page or browser error
-  cnnStatus = 'load event fired (but content likely blocked by frame-ancestors / X-Frame-Options)';
-  updateStatus();
-});
-iframeCnn.addEventListener('error', () => {
-  cnnStatus = 'error event fired';
-  updateStatus();
-});
+      iframeCnn.addEventListener("load", () => {
+        // "load" fires even when blocked — the iframe shows a blank page or browser error
+        cnnStatus =
+          "load event fired (but content likely blocked by frame-ancestors / X-Frame-Options)";
+        updateStatus();
+      });
+      iframeCnn.addEventListener("error", () => {
+        cnnStatus = "error event fired";
+        updateStatus();
+      });
 
-iframeWiki.addEventListener('load', () => {
-  wikiStatus = 'loaded successfully';
-  updateStatus();
-});
-iframeWiki.addEventListener('error', () => {
-  wikiStatus = 'error event fired';
-  updateStatus();
-});
+      iframeWiki.addEventListener("load", () => {
+        wikiStatus = "loaded successfully";
+        updateStatus();
+      });
+      iframeWiki.addEventListener("error", () => {
+        wikiStatus = "error event fired";
+        updateStatus();
+      });
 
-// Timeout check
-setTimeout(() => {
-  if (cnnStatus === 'loading') {
-    cnnStatus = 'still loading after 10s (likely blocked or very slow)';
-    updateStatus();
-  }
-}, 10000);
+      // Timeout check
+      setTimeout(() => {
+        if (cnnStatus === "loading") {
+          cnnStatus = "still loading after 10s (likely blocked or very slow)";
+          updateStatus();
+        }
+      }, 10000);
 
-// --- WebGL scene ---
-const webglScene = new THREE.Scene();
+      // --- WebGL scene ---
+      const webglScene = new THREE.Scene();
 
-// Depth masks for both iframes
-function createDepthMask(cssObj, w, h) {
-  const mask = new THREE.Mesh(
-    new THREE.PlaneGeometry(w, h),
-    new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
-  );
-  mask.position.copy(cssObj.position);
-  mask.position.z = cssObj.position.z;  // align with iframe plane
-  mask.scale.copy(cssObj.scale);
-  mask.renderOrder = -1;
-  return mask;
-}
-webglScene.add(createDepthMask(cssCnn, 800, 640));
-webglScene.add(createDepthMask(cssWiki, 800, 640));
+      // Depth masks for both iframes
+      function createDepthMask(cssObj, w, h) {
+        const mask = new THREE.Mesh(
+          new THREE.PlaneGeometry(w, h),
+          new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true }),
+        );
+        mask.position.copy(cssObj.position);
+        mask.position.z = cssObj.position.z; // align with iframe plane
+        mask.scale.copy(cssObj.scale);
+        mask.renderOrder = -1;
+        return mask;
+      }
+      webglScene.add(createDepthMask(cssCnn, 800, 640));
+      webglScene.add(createDepthMask(cssWiki, 800, 640));
 
-// Decorative objects
-const avatar1 = new THREE.Mesh(
-  new THREE.SphereGeometry(30, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0xff4444 })
-);
-avatar1.position.set(-280, 200, 40);
-webglScene.add(avatar1);
+      // Decorative objects
+      const avatar1 = new THREE.Mesh(
+        new THREE.SphereGeometry(30, 32, 32),
+        new THREE.MeshBasicMaterial({ color: 0xff4444 }),
+      );
+      avatar1.position.set(-280, 200, 40);
+      webglScene.add(avatar1);
 
-const avatar2 = new THREE.Mesh(
-  new THREE.SphereGeometry(30, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0x4fc3f7 })
-);
-avatar2.position.set(280, 200, 40);
-webglScene.add(avatar2);
+      const avatar2 = new THREE.Mesh(
+        new THREE.SphereGeometry(30, 32, 32),
+        new THREE.MeshBasicMaterial({ color: 0x4fc3f7 }),
+      );
+      avatar2.position.set(280, 200, 40);
+      webglScene.add(avatar2);
 
-webglScene.add(new THREE.AmbientLight(0xffffff, 1));
+      webglScene.add(new THREE.AmbientLight(0xffffff, 1));
 
-// --- Camera rotation ---
-let autoRotate = false;
-document.getElementById('btn-rotate').addEventListener('click', (e) => {
-  autoRotate = !autoRotate;
-  e.target.classList.toggle('active', autoRotate);
-});
-document.getElementById('btn-reset').addEventListener('click', () => {
-  autoRotate = false;
-  camera.position.set(0, 0, 1800);
-  controls.target.set(0, 0, 0);
-  document.getElementById('btn-rotate').classList.remove('active');
-});
+      // --- Camera rotation ---
+      let autoRotate = false;
+      document.getElementById("btn-rotate").addEventListener("click", (e) => {
+        autoRotate = !autoRotate;
+        e.target.classList.toggle("active", autoRotate);
+      });
+      document.getElementById("btn-reset").addEventListener("click", () => {
+        autoRotate = false;
+        camera.position.set(0, 0, 1800);
+        controls.target.set(0, 0, 0);
+        document.getElementById("btn-rotate").classList.remove("active");
+      });
 
-// --- FPS ---
-let frameCount = 0;
-let lastFpsTime = performance.now();
+      // --- FPS ---
+      let frameCount = 0;
+      let lastFpsTime = performance.now();
 
-function animate() {
-  requestAnimationFrame(animate);
-  if (autoRotate) {
-    const t = Date.now() * 0.0005;
-    camera.position.x = Math.sin(t) * 1800;
-    camera.position.z = Math.cos(t) * 1800;
-    camera.position.y = Math.sin(t * 0.7) * 300;
-    camera.lookAt(0, 0, 0);
-  }
-  controls.update();
-  css3dRenderer.render(scene, camera);
-  webglRenderer.render(webglScene, camera);
+      function animate() {
+        requestAnimationFrame(animate);
+        if (autoRotate) {
+          const t = Date.now() * 0.0005;
+          camera.position.x = Math.sin(t) * 1800;
+          camera.position.z = Math.cos(t) * 1800;
+          camera.position.y = Math.sin(t * 0.7) * 300;
+          camera.lookAt(0, 0, 0);
+        }
+        controls.update();
+        css3dRenderer.render(scene, camera);
+        webglRenderer.render(webglScene, camera);
 
-  frameCount++;
-  const now = performance.now();
-  if (now - lastFpsTime >= 1000) {
-    document.getElementById('fps').textContent = `FPS: ${Math.round(frameCount * 1000 / (now - lastFpsTime))}`;
-    frameCount = 0;
-    lastFpsTime = now;
-  }
-}
-animate();
+        frameCount++;
+        const now = performance.now();
+        if (now - lastFpsTime >= 1000) {
+          document.getElementById("fps").textContent =
+            `FPS: ${Math.round((frameCount * 1000) / (now - lastFpsTime))}`;
+          frameCount = 0;
+          lastFpsTime = now;
+        }
+      }
+      animate();
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  css3dRenderer.setSize(window.innerWidth, window.innerHeight);
-  webglRenderer.setSize(window.innerWidth, window.innerHeight);
-});
-</script>
-</body>
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+        webglRenderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  </body>
 </html>

@@ -95,8 +95,7 @@ export function setupProxy(app: Express): void {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; Slatog/0.1)",
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
       });
 

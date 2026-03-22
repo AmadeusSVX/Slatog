@@ -2,11 +2,7 @@
 // State-based sync: modules mutate RoomState, onChange callback triggers broadcast.
 
 import { LWWRegister, LWWMap } from "./crdt.js";
-import type {
-  ChatMessageEntry,
-  StrokeEntry,
-  RoomStateSnapshot,
-} from "./data-protocol.js";
+import type { ChatMessageEntry, StrokeEntry, RoomStateSnapshot } from "./data-protocol.js";
 
 const TOTAL_BUDGET = 65536; // 64KB
 const CHAT_BUDGET = 16384; // 16KB

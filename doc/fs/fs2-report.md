@@ -33,7 +33,7 @@ WebGLRenderer (z-index: 2, pointer-events: none, alpha: true) → 3Dオブジェ
 ```js
 const maskPlane = new THREE.Mesh(
   new THREE.PlaneGeometry(1024, 768),
-  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
+  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true }),
 );
 maskPlane.position.copy(cssObject.position);
 maskPlane.scale.copy(cssObject.scale);
@@ -41,6 +41,7 @@ maskPlane.renderOrder = -1;
 ```
 
 **検証結果**:
+
 - iframe前面のオブジェクト（ストローク、アバター）→ 正常に可視
 - iframe背後のオブジェクト → depth maskにより正しくオクルージョン（不可視）
 - カメラ回転時 → maskPlaneがCSS3DObjectと同一座標を共有するため、角度が変わっても前後関係が正しく維持される
@@ -50,6 +51,7 @@ maskPlane.renderOrder = -1;
 **結果**: iframe上でのスクロール・クリックと、iframe外での3Dカメラ操作・ペン入力が**共存可能**。
 
 **メカニズム**:
+
 - WebGLのcanvasに `pointer-events: none` を設定
 - マウスイベントはCSS3Dレイヤー（iframe含む）に透過
 - iframe内のスクロール・リンククリックが正常に動作
@@ -63,6 +65,7 @@ maskPlane.renderOrder = -1;
 **結果**: 2レンダラー同時稼働時に**60fps維持可能**。
 
 **計測条件**:
+
 - CSS3DRenderer: iframe 1枚
 - WebGLRenderer: ストロークメッシュ(TubeGeometry) + 球体 + ボックス x2
 - OrbitControlsによるカメラ操作中
@@ -71,12 +74,12 @@ maskPlane.renderOrder = -1;
 
 ## 総合判定
 
-| 検証項目 | 結果 | 判定 |
-|----------|------|------|
-| 前面描画 | WebGLがz-indexでCSS3Dの上層 + depth maskでオクルージョン制御 | PASS |
-| 深度整合 | depth mask (colorWrite:false, depthWrite:true) で正しい前後関係 | PASS |
-| 入力イベント | iframe操作とカメラ操作の共存可能 | PASS |
-| パフォーマンス | 60fps維持可能 | PASS |
+| 検証項目       | 結果                                                            | 判定 |
+| -------------- | --------------------------------------------------------------- | ---- |
+| 前面描画       | WebGLがz-indexでCSS3Dの上層 + depth maskでオクルージョン制御    | PASS |
+| 深度整合       | depth mask (colorWrite:false, depthWrite:true) で正しい前後関係 | PASS |
+| 入力イベント   | iframe操作とカメラ操作の共存可能                                | PASS |
+| パフォーマンス | 60fps維持可能                                                   | PASS |
 
 **FS-2の結論: 全検証項目PASS。CSS3DRenderer + WebGLRendererの重ね合わせは実用可能。**
 

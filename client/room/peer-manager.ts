@@ -65,10 +65,7 @@ export class PeerManager {
   }
 
   /** Handle an incoming SDP offer */
-  async handleOffer(
-    remotePeerId: string,
-    sdp: RTCSessionDescriptionInit,
-  ): Promise<void> {
+  async handleOffer(remotePeerId: string, sdp: RTCSessionDescriptionInit): Promise<void> {
     const entry = this.createPeerConnection(remotePeerId);
 
     await entry.conn.setRemoteDescription(sdp);
@@ -83,20 +80,14 @@ export class PeerManager {
   }
 
   /** Handle an incoming SDP answer */
-  async handleAnswer(
-    remotePeerId: string,
-    sdp: RTCSessionDescriptionInit,
-  ): Promise<void> {
+  async handleAnswer(remotePeerId: string, sdp: RTCSessionDescriptionInit): Promise<void> {
     const entry = this.peers.get(remotePeerId);
     if (!entry) return;
     await entry.conn.setRemoteDescription(sdp);
   }
 
   /** Handle an incoming ICE candidate */
-  async handleIceCandidate(
-    remotePeerId: string,
-    candidate: RTCIceCandidateInit,
-  ): Promise<void> {
+  async handleIceCandidate(remotePeerId: string, candidate: RTCIceCandidateInit): Promise<void> {
     const entry = this.peers.get(remotePeerId);
     if (!entry) return;
     await entry.conn.addIceCandidate(candidate);
@@ -106,8 +97,7 @@ export class PeerManager {
   sendTo(peerId: string, channel: "state" | "realtime", data: string): void {
     const entry = this.peers.get(peerId);
     if (!entry) return;
-    const dc =
-      channel === "state" ? entry.stateChannel : entry.realtimeChannel;
+    const dc = channel === "state" ? entry.stateChannel : entry.realtimeChannel;
     if (dc?.readyState === "open") {
       dc.send(data);
     }
@@ -117,8 +107,7 @@ export class PeerManager {
   broadcast(channel: "state" | "realtime", data: string): void {
     for (const [peerId, entry] of this.peers) {
       if (!entry.connected) continue;
-      const dc =
-        channel === "state" ? entry.stateChannel : entry.realtimeChannel;
+      const dc = channel === "state" ? entry.stateChannel : entry.realtimeChannel;
       if (dc?.readyState === "open") {
         dc.send(data);
       } else {
@@ -146,9 +135,7 @@ export class PeerManager {
   }
 
   get connectedPeerIds(): string[] {
-    return [...this.peers.entries()]
-      .filter(([, e]) => e.connected)
-      .map(([id]) => id);
+    return [...this.peers.entries()].filter(([, e]) => e.connected).map(([id]) => id);
   }
 
   // --- Private ---
@@ -184,11 +171,7 @@ export class PeerManager {
       if (state === "connected") {
         entry.connected = true;
         this.onPeerState(remotePeerId, "connected");
-      } else if (
-        state === "disconnected" ||
-        state === "failed" ||
-        state === "closed"
-      ) {
+      } else if (state === "disconnected" || state === "failed" || state === "closed") {
         entry.connected = false;
         this.onPeerState(remotePeerId, "disconnected");
       }
@@ -209,11 +192,7 @@ export class PeerManager {
     return entry;
   }
 
-  private setupDataChannel(
-    remotePeerId: string,
-    dc: RTCDataChannel,
-    name: string,
-  ): void {
+  private setupDataChannel(remotePeerId: string, dc: RTCDataChannel, name: string): void {
     dc.onmessage = (e) => {
       this.onData(remotePeerId, name, e.data as string);
     };

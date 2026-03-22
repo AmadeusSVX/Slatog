@@ -41,6 +41,7 @@ export interface ChatMessageEntry {
   id: string;
   authorPeerId: string;
   authorName: string;
+  colorIndex: number; // D15: index into USER_COLORS
   text: string;
   timestamp: number;
 }

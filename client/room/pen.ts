@@ -1,41 +1,49 @@
-// D3: Pen stroke drawing in 3D space
+// D3, D15, D17: Pen stroke drawing in 3D space
+// D17: Uses Line2 + LineMaterial for screen-space line width control.
 // State-based sync: finishStroke() mutates RoomState only; broadcast is handled by main.ts.
 // reconcileUI calls renderStroke/removeStroke for incremental scene updates.
 
 import * as THREE from "three";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { v4 as uuidv4 } from "uuid";
 import type { RoomState } from "../../shared/room-state.js";
 import type { StrokeEntry } from "../../shared/data-protocol.js";
 import type { SceneContext } from "./scene.js";
+import { USER_COLORS } from "../../shared/colors.js";
 
-const DEFAULT_COLOR = "#ff4444";
+const DEFAULT_LINE_WIDTH = 5; // D17: screen-space pixels
 const DRAW_PLANE_Z = 10; // slightly in front of iframe (z=0)
 
 export class PenManager {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
+  private container: HTMLElement;
   private roomState: RoomState;
   private myPeerId: string;
-  private container: HTMLElement;
   private raycaster = new THREE.Raycaster();
   private drawPlane: THREE.Plane;
   private isDrawing = false;
   private currentPoints: THREE.Vector3[] = [];
-  private currentLine: THREE.Line | null = null;
-  private strokeLines = new Map<string, THREE.Line>();
+  private currentLine: Line2 | null = null;
+  private strokeLines = new Map<string, Line2>();
   private enabled = false;
-  private color = DEFAULT_COLOR;
+  private color: string;
+  private resolution = new THREE.Vector2(1, 1);
   private pointerDownHandler: (e: PointerEvent) => void;
   private pointerMoveHandler: (e: PointerEvent) => void;
   private pointerUpHandler: () => void;
 
-  constructor(ctx: SceneContext, roomState: RoomState, myPeerId: string) {
+  constructor(ctx: SceneContext, roomState: RoomState, myPeerId: string, colorIndex = 0) {
     this.scene = ctx.scene;
     this.camera = ctx.camera;
     this.roomState = roomState;
     this.myPeerId = myPeerId;
     this.container = ctx.container;
+    this.color = USER_COLORS[colorIndex % USER_COLORS.length];
     this.drawPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -DRAW_PLANE_Z);
+    this.resolution.set(ctx.container.clientWidth, ctx.container.clientHeight);
 
     this.pointerDownHandler = this.onPointerDown.bind(this);
     this.pointerMoveHandler = this.onPointerMove.bind(this);
@@ -62,7 +70,6 @@ export class PenManager {
     this.color = color;
   }
 
-  /** Render a stroke in the 3D scene (called from reconcileUI for remote strokes) */
   renderStroke(stroke: StrokeEntry): void {
     const existing = this.strokeLines.get(stroke.id);
     if (existing) {
@@ -71,21 +78,12 @@ export class PenManager {
       (existing.material as THREE.Material).dispose();
     }
 
-    const material = new THREE.LineBasicMaterial({ color: stroke.color });
-    const positions = new Float32Array(stroke.points.length * 3);
-    for (let i = 0; i < stroke.points.length; i++) {
-      positions[i * 3] = stroke.points[i].x;
-      positions[i * 3 + 1] = stroke.points[i].y;
-      positions[i * 3 + 2] = stroke.points[i].z;
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const line = new THREE.Line(geometry, material);
+    const lineWidth = stroke.width || DEFAULT_LINE_WIDTH;
+    const line = createLine2FromPoints(stroke.points, stroke.color, lineWidth, this.resolution);
     this.scene.add(line);
     this.strokeLines.set(stroke.id, line);
   }
 
-  /** Remove a stroke from the 3D scene (called when enforceBudget removes it) */
   removeStroke(id: string): void {
     const line = this.strokeLines.get(id);
     if (!line) return;
@@ -95,7 +93,6 @@ export class PenManager {
     this.strokeLines.delete(id);
   }
 
-  /** Re-render all strokes from RoomState (for late joiner snapshot apply) */
   restoreStrokes(): void {
     const strokes = this.roomState.strokes.valuesByTime();
     for (const stroke of strokes) {
@@ -113,8 +110,6 @@ export class PenManager {
     this.strokeLines.clear();
   }
 
-  // --- Private ---
-
   private onPointerDown(e: PointerEvent): void {
     if (!this.enabled || e.button !== 0) return;
     if ((e.target as HTMLElement).closest("#chat-panel, #status-bar, #peer-list")) return;
@@ -124,9 +119,12 @@ export class PenManager {
     const point = this.screenToWorld(e);
     if (point) this.currentPoints.push(point);
 
-    const material = new THREE.LineBasicMaterial({ color: this.color });
-    const geometry = new THREE.BufferGeometry();
-    this.currentLine = new THREE.Line(geometry, material);
+    this.currentLine = createLine2FromPoints(
+      this.currentPoints.map((p) => ({ x: p.x, y: p.y, z: p.z })),
+      this.color,
+      DEFAULT_LINE_WIDTH,
+      this.resolution,
+    );
     this.scene.add(this.currentLine);
     e.preventDefault();
   }
@@ -137,13 +135,16 @@ export class PenManager {
     if (!point) return;
 
     this.currentPoints.push(point);
-    const positions = new Float32Array(this.currentPoints.length * 3);
-    for (let i = 0; i < this.currentPoints.length; i++) {
-      positions[i * 3] = this.currentPoints[i].x;
-      positions[i * 3 + 1] = this.currentPoints[i].y;
-      positions[i * 3 + 2] = this.currentPoints[i].z;
-    }
-    this.currentLine.geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    this.scene.remove(this.currentLine);
+    this.currentLine.geometry.dispose();
+    (this.currentLine.material as THREE.Material).dispose();
+    this.currentLine = createLine2FromPoints(
+      this.currentPoints.map((p) => ({ x: p.x, y: p.y, z: p.z })),
+      this.color,
+      DEFAULT_LINE_WIDTH,
+      this.resolution,
+    );
+    this.scene.add(this.currentLine);
   }
 
   private onPointerUp(): void {
@@ -170,14 +171,11 @@ export class PenManager {
       authorPeerId: this.myPeerId,
       points: this.currentPoints.map((p) => ({ x: p.x, y: p.y, z: p.z })),
       color: this.color,
-      width: 3,
+      width: DEFAULT_LINE_WIDTH,
       timestamp: Date.now(),
     };
 
-    // Keep the current THREE.Line as the rendered stroke
     this.strokeLines.set(id, this.currentLine);
-
-    // Mutate RoomState — onChange callback will trigger broadcast
     this.roomState.addStroke(entry);
 
     this.currentLine = null;
@@ -194,4 +192,27 @@ export class PenManager {
     const target = new THREE.Vector3();
     return this.raycaster.ray.intersectPlane(this.drawPlane, target);
   }
+}
+
+function createLine2FromPoints(
+  points: { x: number; y: number; z: number }[],
+  color: string,
+  lineWidth: number,
+  resolution: THREE.Vector2,
+): Line2 {
+  const positions: number[] = [];
+  for (const p of points) {
+    positions.push(p.x, p.y, p.z);
+  }
+
+  const geometry = new LineGeometry();
+  geometry.setPositions(positions);
+
+  const material = new LineMaterial({
+    color: new THREE.Color(color).getHex(),
+    linewidth: lineWidth,
+    resolution,
+  });
+
+  return new Line2(geometry, material);
 }

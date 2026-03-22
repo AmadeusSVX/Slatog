@@ -24,7 +24,11 @@ const OEMBED_PROVIDERS = {
   Spotify: {
     endpoint: "https://open.spotify.com/oembed",
     testUrl: "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8",
-    urlPatterns: ["open.spotify.com/track/*", "open.spotify.com/album/*", "open.spotify.com/playlist/*"],
+    urlPatterns: [
+      "open.spotify.com/track/*",
+      "open.spotify.com/album/*",
+      "open.spotify.com/playlist/*",
+    ],
     note: "トラック/アルバム/プレイリスト",
   },
   Instagram: {
@@ -106,7 +110,11 @@ const SITES = [
   { category: "SNS/コミュニティ", name: "Bluesky", url: "https://bsky.app" },
 
   // ドキュメント/Wiki (10件)
-  { category: "ドキュメント/Wiki", name: "Wikipedia", url: "https://en.wikipedia.org/wiki/Main_Page" },
+  {
+    category: "ドキュメント/Wiki",
+    name: "Wikipedia",
+    url: "https://en.wikipedia.org/wiki/Main_Page",
+  },
   { category: "ドキュメント/Wiki", name: "MDN Web Docs", url: "https://developer.mozilla.org" },
   { category: "ドキュメント/Wiki", name: "GitHub", url: "https://github.com" },
   { category: "ドキュメント/Wiki", name: "GitLab", url: "https://gitlab.com" },
@@ -136,10 +144,18 @@ const SITES = [
   { category: "技術ブログ/個人サイト", name: "Qiita", url: "https://qiita.com" },
   { category: "技術ブログ/個人サイト", name: "Hashnode", url: "https://hashnode.com" },
   { category: "技術ブログ/個人サイト", name: "CSS-Tricks", url: "https://css-tricks.com" },
-  { category: "技術ブログ/個人サイト", name: "Smashing Magazine", url: "https://www.smashingmagazine.com" },
+  {
+    category: "技術ブログ/個人サイト",
+    name: "Smashing Magazine",
+    url: "https://www.smashingmagazine.com",
+  },
   { category: "技術ブログ/個人サイト", name: "freeCodeCamp", url: "https://www.freecodecamp.org" },
   { category: "技術ブログ/個人サイト", name: "web.dev", url: "https://web.dev" },
-  { category: "技術ブログ/個人サイト", name: "Hatenablog (example)", url: "https://blog.hatena.ne.jp" },
+  {
+    category: "技術ブログ/個人サイト",
+    name: "Hatenablog (example)",
+    url: "https://blog.hatena.ne.jp",
+  },
 ];
 
 // --- iframe check (same as v1) ---
@@ -184,11 +200,18 @@ async function checkIframeEmbeddable(url) {
       const tokens = frameAncestors.trim().split(/\s+/);
       if (!tokens.includes("*")) {
         blocked = true;
-        reason = reason ? `${reason} + frame-ancestors` : `frame-ancestors: ${frameAncestors.trim()}`;
+        reason = reason
+          ? `${reason} + frame-ancestors`
+          : `frame-ancestors: ${frameAncestors.trim()}`;
       }
     }
 
-    return { embeddable: !blocked, xfo: xfo || "(none)", frameAncestors: frameAncestors || "(none)", reason: reason || "(no restriction)" };
+    return {
+      embeddable: !blocked,
+      xfo: xfo || "(none)",
+      frameAncestors: frameAncestors || "(none)",
+      reason: reason || "(no restriction)",
+    };
   } catch (err) {
     return { embeddable: false, xfo: "ERROR", frameAncestors: "ERROR", reason: err.message };
   }
@@ -229,9 +252,17 @@ async function checkOembed(siteName, siteUrl) {
         };
       }
     }
-    return { supported: false, note: `oEmbed endpoint returned ${res.status}`, method: "known-provider" };
+    return {
+      supported: false,
+      note: `oEmbed endpoint returned ${res.status}`,
+      method: "known-provider",
+    };
   } catch (err) {
-    return { supported: false, note: `oEmbed check failed: ${err.message}`, method: "known-provider" };
+    return {
+      supported: false,
+      note: `oEmbed check failed: ${err.message}`,
+      method: "known-provider",
+    };
   }
 }
 
@@ -244,11 +275,19 @@ async function discoverOembed(url, siteName) {
     const html = await res.text();
 
     // Look for <link rel="alternate" type="application/json+oembed" ...>
-    const jsonMatch = html.match(/<link[^>]+type=["']application\/json\+oembed["'][^>]*href=["']([^"']+)["']/i);
-    const xmlMatch = html.match(/<link[^>]+type=["']text\/xml\+oembed["'][^>]*href=["']([^"']+)["']/i);
+    const jsonMatch = html.match(
+      /<link[^>]+type=["']application\/json\+oembed["'][^>]*href=["']([^"']+)["']/i,
+    );
+    const xmlMatch = html.match(
+      /<link[^>]+type=["']text\/xml\+oembed["'][^>]*href=["']([^"']+)["']/i,
+    );
     // Also try href before type
-    const jsonMatch2 = html.match(/<link[^>]+href=["']([^"']+)["'][^>]*type=["']application\/json\+oembed["']/i);
-    const xmlMatch2 = html.match(/<link[^>]+href=["']([^"']+)["'][^>]*type=["']text\/xml\+oembed["']/i);
+    const jsonMatch2 = html.match(
+      /<link[^>]+href=["']([^"']+)["'][^>]*type=["']application\/json\+oembed["']/i,
+    );
+    const xmlMatch2 = html.match(
+      /<link[^>]+href=["']([^"']+)["'][^>]*type=["']text\/xml\+oembed["']/i,
+    );
 
     const discoveredUrl = jsonMatch?.[1] || jsonMatch2?.[1] || xmlMatch?.[1] || xmlMatch2?.[1];
 
@@ -264,15 +303,30 @@ async function discoverOembed(url, siteName) {
           if (contentType.includes("json")) {
             const data = await oRes.json();
             if (data.html || data.type) {
-              return { supported: true, type: data.type || "unknown", note: "HTMLリンクタグで発見", method: "discovery" };
+              return {
+                supported: true,
+                type: data.type || "unknown",
+                note: "HTMLリンクタグで発見",
+                method: "discovery",
+              };
             }
           } else {
             await oRes.text(); // consume XML
-            return { supported: true, type: "unknown", note: "HTMLリンクタグで発見 (XML)", method: "discovery" };
+            return {
+              supported: true,
+              type: "unknown",
+              note: "HTMLリンクタグで発見 (XML)",
+              method: "discovery",
+            };
           }
         }
       } catch {}
-      return { supported: true, type: "unknown", note: "oEmbedリンク検出（未検証）", method: "discovery" };
+      return {
+        supported: true,
+        type: "unknown",
+        note: "oEmbedリンク検出（未検証）",
+        method: "discovery",
+      };
     }
 
     // Try well-known WordPress oEmbed endpoint
@@ -286,7 +340,12 @@ async function discoverOembed(url, siteName) {
       if (wpRes.ok) {
         const data = await wpRes.json();
         if (data.html || data.type) {
-          return { supported: true, type: data.type || "unknown", note: "WordPress oEmbed", method: "wp-json" };
+          return {
+            supported: true,
+            type: data.type || "unknown",
+            note: "WordPress oEmbed",
+            method: "wp-json",
+          };
         }
       }
     } catch {}
@@ -319,7 +378,7 @@ async function main() {
         }
 
         return { ...site, iframe, oembed, displayMethod };
-      })
+      }),
     );
     results.push(...batchResults);
     process.stdout.write(`  ${Math.min(i + 5, SITES.length)}/${SITES.length} sites checked\n`);
@@ -329,7 +388,9 @@ async function main() {
   console.log("\n=== FS-1 v2 調査結果 ===\n");
 
   const categories = [...new Set(results.map((r) => r.category))];
-  let totalIframe = 0, totalOembed = 0, totalNone = 0;
+  let totalIframe = 0,
+    totalOembed = 0,
+    totalNone = 0;
 
   for (const cat of categories) {
     console.log(`### ${cat}`);
@@ -340,7 +401,9 @@ async function main() {
     for (const r of catResults) {
       const iframeStatus = r.iframe.embeddable ? "OK" : "NG";
       const oembedStatus = r.oembed.supported ? `OK (${r.oembed.note})` : "NG";
-      console.log(`| ${r.name} | ${iframeStatus} | ${oembedStatus} | **${r.displayMethod}** | ${r.iframe.embeddable ? "" : r.iframe.reason} |`);
+      console.log(
+        `| ${r.name} | ${iframeStatus} | ${oembedStatus} | **${r.displayMethod}** | ${r.iframe.embeddable ? "" : r.iframe.reason} |`,
+      );
 
       if (r.displayMethod === "IFRAME") totalIframe++;
       else if (r.displayMethod === "OEMBED") totalOembed++;

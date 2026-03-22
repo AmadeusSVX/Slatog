@@ -8,6 +8,7 @@ import { setupProxy } from "./proxy.js";
 import { InMemoryRoomStore } from "./store.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
+const SESSION_TTL = parseInt(process.env.SLATOG_SESSION_TTL || "-1", 10); // D20
 
 const app = express();
 const server = createServer(app);
@@ -27,6 +28,16 @@ setupProxy(app);
 // Serve FS test files for proxy verification
 const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use("/fs", express.static(join(__dirname, "..", "doc", "fs")));
+
+// D20: Session auto-deletion timer
+if (SESSION_TTL !== -1) {
+  setInterval(() => {
+    const deleted = store.deleteExpiredSessions(SESSION_TTL * 1000);
+    if (deleted > 0) {
+      console.log(`Cleaned up ${deleted} expired sessions`);
+    }
+  }, 60_000);
+}
 
 server.listen(PORT, () => {
   console.log(`Slatog server listening on http://localhost:${PORT}`);

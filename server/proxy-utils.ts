@@ -39,11 +39,7 @@ export function validateProxyUrl(raw: string): URL {
 
   // Block common internal hostnames
   const h = parsed.hostname.toLowerCase();
-  if (
-    h === "localhost" ||
-    h.endsWith(".local") ||
-    h.endsWith(".internal")
-  ) {
+  if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal")) {
     throw new ProxyError(403, "Private/internal URLs are not allowed");
   }
 
@@ -54,9 +50,7 @@ export function validateProxyUrl(raw: string): URL {
 
 const FRAME_BLOCKING_HEADERS = ["x-frame-options"];
 
-export function stripFrameHeaders(
-  headers: Headers,
-): Record<string, string> {
+export function stripFrameHeaders(headers: Headers): Record<string, string> {
   const result: Record<string, string> = {};
 
   headers.forEach((value, key) => {
@@ -74,9 +68,7 @@ export function stripFrameHeaders(
         .map((d) => d.trim())
         .filter((d) => {
           const dl = d.toLowerCase();
-          return (
-            !dl.startsWith("frame-ancestors") && !dl.startsWith("script-src")
-          );
+          return !dl.startsWith("frame-ancestors") && !dl.startsWith("script-src");
         })
         .join("; ");
       if (stripped) {
@@ -161,7 +153,11 @@ function escapeAttr(s: string): string {
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 // --- Embeddability check ---

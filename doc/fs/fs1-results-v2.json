@@ -184,10 +184,7 @@
         "supported": true,
         "type": "rich",
         "note": "個別ツイートのみ。タイムラインは非対応",
-        "urlPatterns": [
-          "x.com/*/status/*",
-          "twitter.com/*/status/*"
-        ],
+        "urlPatterns": ["x.com/*/status/*", "twitter.com/*/status/*"],
         "method": "known-provider"
       },
       "displayMethod": "OEMBED"
@@ -206,9 +203,7 @@
         "supported": true,
         "type": "rich",
         "note": "個別投稿のみ。サブレディットトップは非対応",
-        "urlPatterns": [
-          "reddit.com/r/*/comments/*"
-        ],
+        "urlPatterns": ["reddit.com/r/*/comments/*"],
         "method": "known-provider"
       },
       "displayMethod": "OEMBED"
@@ -550,10 +545,7 @@
         "supported": true,
         "type": "video",
         "note": "個別動画のみ。トップページ・チャンネルは非対応",
-        "urlPatterns": [
-          "youtube.com/watch?v=*",
-          "youtu.be/*"
-        ],
+        "urlPatterns": ["youtube.com/watch?v=*", "youtu.be/*"],
         "method": "known-provider"
       },
       "displayMethod": "OEMBED"

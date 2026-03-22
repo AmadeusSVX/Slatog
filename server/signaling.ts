@@ -14,6 +14,7 @@ interface PeerConnection {
   ws: WebSocket;
   peerId: string;
   peerName: string;
+  userId: string; // D14
   roomId: string | null;
   alive: boolean;
 }
@@ -41,6 +42,7 @@ export function setupSignaling(server: Server, store: RoomStore): void {
       ws,
       peerId: "",
       peerName: "",
+      userId: "",
       roomId: null,
       alive: true,
     };
@@ -77,7 +79,7 @@ function handleMessage(
 ): void {
   switch (msg.type) {
     case "JOIN_ROOM":
-      handleJoinRoom(ws, conn, msg.urlKey, msg.peerId, msg.peerName, peers, store);
+      handleJoinRoom(ws, conn, msg.urlKey, msg.peerId, msg.peerName, msg.userId, peers, store);
       break;
     case "LEAVE_ROOM":
       handleDisconnect(conn, peers, store);
@@ -107,6 +109,7 @@ function handleJoinRoom(
   urlKey: string,
   peerId: string,
   peerName: string,
+  userId: string,
   peers: Map<WebSocket, PeerConnection>,
   store: RoomStore,
 ): void {
@@ -117,6 +120,7 @@ function handleJoinRoom(
 
   conn.peerId = peerId;
   conn.peerName = peerName;
+  conn.userId = userId;
 
   // Find an existing session with space, or create a new one
   const sessions = store.getSessionsByUrl(urlKey);
@@ -145,6 +149,8 @@ function handleJoinRoom(
       hostPeerId: peerId,
       peerCount: 1,
       createdAt: Date.now(),
+      stateCache: null, // D18
+      stateUpdatedAt: null, // D18
     });
   }
 
@@ -154,7 +160,7 @@ function handleJoinRoom(
   const existingPeers: PeerInfo[] = [];
   for (const [, p] of peers) {
     if (p.roomId === roomId && p.peerId !== peerId && p.peerId) {
-      existingPeers.push({ peerId: p.peerId, peerName: p.peerName });
+      existingPeers.push({ peerId: p.peerId, peerName: p.peerName, userId: p.userId });
     }
   }
 
@@ -176,6 +182,7 @@ function handleJoinRoom(
         type: "PEER_JOINED",
         peerId,
         peerName,
+        userId,
       });
     }
   }
@@ -197,8 +204,9 @@ function handleDisconnect(
   session.peerCount = session.peers.length;
 
   if (session.peerCount === 0) {
-    // Room empty — delete
-    store.deleteSession(roomId);
+    // D19: Room empty — keep session for restore (don't delete)
+    session.hostPeerId = "";
+    store.setSession(roomId, session);
   } else {
     // Check if host left — migrate (D7: lexicographic minimum)
     let needsMigration = false;
