@@ -105,7 +105,7 @@ export function injectBaseTag(html: string, baseUrl: string): string {
 
   const baseTag = `<base href="${escapeHtml(baseHref)}">`;
 
-  // Script to intercept navigation: redirect clicks & form submissions through proxy
+  // Script to intercept navigation + scroll sync via postMessage
   const navScript = `<script>(function(){
 var O="${escapeAttr(origin)}";
 function proxyHref(u){
@@ -127,6 +127,22 @@ document.addEventListener("submit",function(e){
   e.preventDefault();
   location.href=proxyHref(f.action);
 },true);
+var _lx=0,_ly=0;
+function _reportScroll(){
+  var sx=window.scrollX||window.pageXOffset||0;
+  var sy=window.scrollY||window.pageYOffset||0;
+  if(sx!==_lx||sy!==_ly){_lx=sx;_ly=sy;
+    window.parent.postMessage({type:"SLATOG_SCROLL",x:sx,y:sy},"*");
+  }
+}
+window.addEventListener("scroll",_reportScroll,{passive:true});
+setInterval(_reportScroll,200);
+window.addEventListener("message",function(e){
+  if(e.data&&e.data.type==="SLATOG_SCROLL_TO"){
+    window.scrollTo(e.data.x||0,e.data.y||0);
+    _lx=e.data.x||0;_ly=e.data.y||0;
+  }
+});
 })();</script>`;
 
   // Insert after <head>

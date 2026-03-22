@@ -8,6 +8,7 @@ import type { SignalingClient } from "./signaling-client.js";
 
 export type DataChannelHandler = (peerId: string, channel: string, data: string) => void;
 export type PeerStateHandler = (peerId: string, state: "connected" | "disconnected") => void;
+export type ChannelOpenHandler = (peerId: string, channel: "state" | "realtime") => void;
 
 interface PeerEntry {
   conn: RTCPeerConnection;
@@ -21,6 +22,7 @@ export class PeerManager {
   private signaling: SignalingClient;
   private onData: DataChannelHandler;
   private onPeerState: PeerStateHandler;
+  private onChannelOpen: ChannelOpenHandler | null = null;
 
   constructor(
     signaling: SignalingClient,
@@ -30,6 +32,11 @@ export class PeerManager {
     this.signaling = signaling;
     this.onData = onData;
     this.onPeerState = onPeerState;
+  }
+
+  /** Register a callback for when a specific DataChannel opens */
+  setOnChannelOpen(handler: ChannelOpenHandler): void {
+    this.onChannelOpen = handler;
   }
 
   /** Create an offer to a remote peer (we are the offerer) */
@@ -212,6 +219,9 @@ export class PeerManager {
     };
     dc.onopen = () => {
       console.log(`[peer] ${name} channel open with ${remotePeerId}`);
+      if (name === "state" || name === "realtime") {
+        this.onChannelOpen?.(remotePeerId, name as "state" | "realtime");
+      }
     };
     dc.onclose = () => {
       console.log(`[peer] ${name} channel closed with ${remotePeerId}`);
