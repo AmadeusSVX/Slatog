@@ -1,0 +1,511 @@
+{
+  "results": [
+    {
+      "category": "ニュース/メディア",
+      "name": "CNN",
+      "url": "https://www.cnn.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "'self' https://*.cnn.com:* http://*.cnn.com https://*.cnn.io:* http://*.cnn.io:* *.turner.com:* courageousstudio.com",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: 'self' https://*.cnn.com:* http://*.cnn.com https://*.cnn.io:* http://*.cnn.io:* *.turner.com:* courageousstudio.com"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "BBC",
+      "url": "https://www.bbc.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "NHK",
+      "url": "https://www3.nhk.or.jp",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "'self' https://*.nhk https://*.nhk.jp https://*.nhk.or.jp",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: 'self' https://*.nhk https://*.nhk.jp https://*.nhk.or.jp"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "Reuters",
+      "url": "https://www.reuters.com",
+      "status": 401,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "'self'",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: 'self'"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "NY Times",
+      "url": "https://www.nytimes.com",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "Asahi Shimbun",
+      "url": "https://www.asahi.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "TechCrunch",
+      "url": "https://techcrunch.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self'",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors: 'self'"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "The Verge",
+      "url": "https://www.theverge.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "https://platform.theverge.com https://*.theverge.com https://platform.theverge.com https://*.theverge.com 'self'",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: https://platform.theverge.com https://*.theverge.com https://platform.theverge.com https://*.theverge.com 'self'"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "Ars Technica",
+      "url": "https://arstechnica.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Twitter/X",
+      "url": "https://x.com",
+      "status": 403,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Reddit",
+      "url": "https://www.reddit.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self' *.reddit.com *.snooguts.net",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors: 'self' *.reddit.com *.snooguts.net"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Facebook",
+      "url": "https://www.facebook.com",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "LinkedIn",
+      "url": "https://www.linkedin.com",
+      "status": 200,
+      "xFrameOptions": "sameorigin",
+      "frameAncestors": "'self' *.www.linkedin.com:*",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: sameorigin + frame-ancestors: 'self' *.www.linkedin.com:*"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Instagram",
+      "url": "https://www.instagram.com",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Discord",
+      "url": "https://discord.com",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Hacker News",
+      "url": "https://news.ycombinator.com",
+      "status": 405,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "'self'",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY + frame-ancestors: 'self'"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Stack Overflow",
+      "url": "https://stackoverflow.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self' https://stackexchange.com",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors: 'self' https://stackexchange.com"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Mastodon (mstdn.jp)",
+      "url": "https://mstdn.jp",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "'none'",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY + frame-ancestors: 'none'"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Bluesky",
+      "url": "https://bsky.app",
+      "status": 405,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Main_Page",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "MDN Web Docs",
+      "url": "https://developer.mozilla.org",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "GitHub",
+      "url": "https://github.com",
+      "status": 200,
+      "xFrameOptions": "deny",
+      "frameAncestors": "'none'",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: deny + frame-ancestors: 'none'"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "GitLab",
+      "url": "https://gitlab.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Rust docs",
+      "url": "https://doc.rust-lang.org/book/",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Python docs",
+      "url": "https://docs.python.org/3/",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Node.js docs",
+      "url": "https://nodejs.org/en/docs",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Arch Wiki",
+      "url": "https://wiki.archlinux.org",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "W3Schools",
+      "url": "https://www.w3schools.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "'self' https://mycourses.w3schools.com https://pathfinder.w3schools.com",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: 'self' https://mycourses.w3schools.com https://pathfinder.w3schools.com"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "DevDocs",
+      "url": "https://devdocs.io",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Amazon",
+      "url": "https://www.amazon.com",
+      "status": 405,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "YouTube",
+      "url": "https://www.youtube.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Google",
+      "url": "https://www.google.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Google Maps",
+      "url": "https://maps.google.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Netflix",
+      "url": "https://www.netflix.com",
+      "status": 405,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Spotify",
+      "url": "https://www.spotify.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "'self' https://adgen-dev.spotify.com/account/*/ad/*/details https://adgen-dev.spotify.com/preview/* https://local.spotify.net/account/*/ad/*/details https://local.spotify.net/preview/* https://app.smartly.io/*",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: 'self' https://adgen-dev.spotify.com/account/*/ad/*/details https://adgen-dev.spotify.com/preview/* https://local.spotify.net/account/*/ad/*/details https://local.spotify.net/preview/* https://app.smartly.io/*"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Notion",
+      "url": "https://www.notion.so",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self' https://www.notion.so https://app.notion.com notion://app.notion.com notion://www.notion.so https://mail.notion.so https://mail.notion.com",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors: 'self' https://www.notion.so https://app.notion.com notion://app.notion.com notion://www.notion.so https://mail.notion.so https://mail.notion.com"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Figma",
+      "url": "https://www.figma.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Twitch",
+      "url": "https://www.twitch.tv",
+      "status": 405,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Rakuten",
+      "url": "https://www.rakuten.co.jp",
+      "status": 200,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Medium",
+      "url": "https://medium.com",
+      "status": 403,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Dev.to",
+      "url": "https://dev.to",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "https://forem.com https://core.forem.com https://version-feb-19-mjhc7.b-cdn.net https://codenewbie.forem.com https://coss.forem.com https://dumb.dev.to https://popcorn.forem.com https://design.forem.com https://maker.forem.com https://bookclub.forem.com https://dev.to https://future.forem.com https://village.forem.com https://music.forem.com https://gg.forem.com https://vibe.forem.com https://golf.forem.com https://crypto.forem.com https://zeroday.forem.com https://open.forem.com https://bizarro.forem.com https://wasp.forem.com https://hmpljs.forem.com https://experimental.forem.com https://parenting.forem.com https://journal.forem.com https://grow.forem.com https://devbrasil.forem.com https://stormkit.forem.com https://scale.forem.com https://dev.to",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: https://forem.com https://core.forem.com https://version-feb-19-mjhc7.b-cdn.net https://codenewbie.forem.com https://coss.forem.com https://dumb.dev.to https://popcorn.forem.com https://design.forem.com https://maker.forem.com https://bookclub.forem.com https://dev.to https://future.forem.com https://village.forem.com https://music.forem.com https://gg.forem.com https://vibe.forem.com https://golf.forem.com https://crypto.forem.com https://zeroday.forem.com https://open.forem.com https://bizarro.forem.com https://wasp.forem.com https://hmpljs.forem.com https://experimental.forem.com https://parenting.forem.com https://journal.forem.com https://grow.forem.com https://devbrasil.forem.com https://stormkit.forem.com https://scale.forem.com https://dev.to"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Zenn",
+      "url": "https://zenn.dev",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Qiita",
+      "url": "https://qiita.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Hashnode",
+      "url": "https://hashnode.com",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "(none)",
+      "embeddable": "YES",
+      "reason": "(no restriction found)"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "CSS-Tricks",
+      "url": "https://css-tricks.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Smashing Magazine",
+      "url": "https://www.smashingmagazine.com",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "freeCodeCamp",
+      "url": "https://www.freecodecamp.org",
+      "status": 200,
+      "xFrameOptions": "SAMEORIGIN",
+      "frameAncestors": "'self'",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors: 'self'"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "web.dev",
+      "url": "https://web.dev",
+      "status": 200,
+      "xFrameOptions": "(none)",
+      "frameAncestors": "'self' https://developers.google.com/_d/analytics-iframe",
+      "embeddable": "NO",
+      "reason": "frame-ancestors: 'self' https://developers.google.com/_d/analytics-iframe"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Hatenablog (example)",
+      "url": "https://blog.hatena.ne.jp",
+      "status": 405,
+      "xFrameOptions": "DENY",
+      "frameAncestors": "(none)",
+      "embeddable": "NO",
+      "reason": "X-Frame-Options: DENY"
+    }
+  ],
+  "summary": {
+    "total": 50,
+    "yes": 9,
+    "no": 41,
+    "unknown": 0,
+    "successRate": "18.0"
+  }
+}

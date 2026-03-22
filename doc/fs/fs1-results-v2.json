@@ -1,0 +1,882 @@
+{
+  "results": [
+    {
+      "category": "ニュース/メディア",
+      "name": "CNN",
+      "url": "https://www.cnn.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "'self' https://*.cnn.com:* http://*.cnn.com https://*.cnn.io:* http://*.cnn.io:* *.turner.com:* courageousstudio.com",
+        "reason": "frame-ancestors: 'self' https://*.cnn.com:* http://*.cnn.com https://*.cnn.io:* http://*.cnn.io:* *.turner.com:* courageousstudio.com"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "BBC",
+      "url": "https://www.bbc.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "NHK",
+      "url": "https://www3.nhk.or.jp",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "'self' https://*.nhk https://*.nhk.jp https://*.nhk.or.jp",
+        "reason": "frame-ancestors: 'self' https://*.nhk https://*.nhk.jp https://*.nhk.or.jp"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "Reuters",
+      "url": "https://www.reuters.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "'self'",
+        "reason": "frame-ancestors: 'self'"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "NY Times",
+      "url": "https://www.nytimes.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "Asahi Shimbun",
+      "url": "https://www.asahi.com",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "TechCrunch",
+      "url": "https://techcrunch.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "'self'",
+        "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed非対応",
+        "method": "N/A"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "The Verge",
+      "url": "https://www.theverge.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "https://platform.theverge.com https://*.theverge.com https://platform.theverge.com https://*.theverge.com 'self'",
+        "reason": "frame-ancestors: https://platform.theverge.com https://*.theverge.com https://platform.theverge.com https://*.theverge.com 'self'"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ニュース/メディア",
+      "name": "Ars Technica",
+      "url": "https://arstechnica.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Twitter/X",
+      "url": "https://x.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": true,
+        "type": "rich",
+        "note": "個別ツイートのみ。タイムラインは非対応",
+        "urlPatterns": [
+          "x.com/*/status/*",
+          "twitter.com/*/status/*"
+        ],
+        "method": "known-provider"
+      },
+      "displayMethod": "OEMBED"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Reddit",
+      "url": "https://www.reddit.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "'self' *.reddit.com *.snooguts.net",
+        "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors"
+      },
+      "oembed": {
+        "supported": true,
+        "type": "rich",
+        "note": "個別投稿のみ。サブレディットトップは非対応",
+        "urlPatterns": [
+          "reddit.com/r/*/comments/*"
+        ],
+        "method": "known-provider"
+      },
+      "displayMethod": "OEMBED"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Facebook",
+      "url": "https://www.facebook.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed APIにFacebook App Tokenが必要。実質利用不可",
+        "method": "N/A"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "LinkedIn",
+      "url": "https://www.linkedin.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "sameorigin",
+        "frameAncestors": "'self' *.www.linkedin.com:*",
+        "reason": "X-Frame-Options: sameorigin + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Instagram",
+      "url": "https://www.instagram.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed APIにFacebook App Tokenが必要。実質利用不可",
+        "method": "N/A"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Discord",
+      "url": "https://discord.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Hacker News",
+      "url": "https://news.ycombinator.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "'self'",
+        "reason": "X-Frame-Options: DENY + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Stack Overflow",
+      "url": "https://stackoverflow.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "'self' https://stackexchange.com",
+        "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Mastodon (mstdn.jp)",
+      "url": "https://mstdn.jp",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "'none'",
+        "reason": "X-Frame-Options: DENY + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "SNS/コミュニティ",
+      "name": "Bluesky",
+      "url": "https://bsky.app",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Main_Page",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "MDN Web Docs",
+      "url": "https://developer.mozilla.org",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "GitHub",
+      "url": "https://github.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "deny",
+        "frameAncestors": "'none'",
+        "reason": "X-Frame-Options: deny + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "GitLab",
+      "url": "https://gitlab.com",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Rust docs",
+      "url": "https://doc.rust-lang.org/book/",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Python docs",
+      "url": "https://docs.python.org/3/",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Node.js docs",
+      "url": "https://nodejs.org/en/docs",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "Arch Wiki",
+      "url": "https://wiki.archlinux.org",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "W3Schools",
+      "url": "https://www.w3schools.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "'self' https://mycourses.w3schools.com https://pathfinder.w3schools.com",
+        "reason": "frame-ancestors: 'self' https://mycourses.w3schools.com https://pathfinder.w3schools.com"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "ドキュメント/Wiki",
+      "name": "DevDocs",
+      "url": "https://devdocs.io",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Amazon",
+      "url": "https://www.amazon.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "YouTube",
+      "url": "https://www.youtube.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": true,
+        "type": "video",
+        "note": "個別動画のみ。トップページ・チャンネルは非対応",
+        "urlPatterns": [
+          "youtube.com/watch?v=*",
+          "youtu.be/*"
+        ],
+        "method": "known-provider"
+      },
+      "displayMethod": "OEMBED"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Google",
+      "url": "https://www.google.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Google Maps",
+      "url": "https://maps.google.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Netflix",
+      "url": "https://www.netflix.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Spotify",
+      "url": "https://www.spotify.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "'self' https://adgen-dev.spotify.com/account/*/ad/*/details https://adgen-dev.spotify.com/preview/* https://local.spotify.net/account/*/ad/*/details https://local.spotify.net/preview/* https://app.smartly.io/*",
+        "reason": "frame-ancestors: 'self' https://adgen-dev.spotify.com/account/*/ad/*/details https://adgen-dev.spotify.com/preview/* https://local.spotify.net/account/*/ad/*/details https://local.spotify.net/preview/* https://app.smartly.io/*"
+      },
+      "oembed": {
+        "supported": true,
+        "type": "rich",
+        "note": "トラック/アルバム/プレイリスト",
+        "urlPatterns": [
+          "open.spotify.com/track/*",
+          "open.spotify.com/album/*",
+          "open.spotify.com/playlist/*"
+        ],
+        "method": "known-provider"
+      },
+      "displayMethod": "OEMBED"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Notion",
+      "url": "https://www.notion.so",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "'self' https://www.notion.so https://app.notion.com notion://app.notion.com notion://www.notion.so https://mail.notion.so https://mail.notion.com",
+        "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Figma",
+      "url": "https://www.figma.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Twitch",
+      "url": "https://www.twitch.tv",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "EC/サービス",
+      "name": "Rakuten",
+      "url": "https://www.rakuten.co.jp",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Medium",
+      "url": "https://medium.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbedエンドポイント存在するがCloudflare bot保護で実質利用不可",
+        "method": "N/A"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Dev.to",
+      "url": "https://dev.to",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "https://forem.com https://core.forem.com https://version-feb-19-mjhc7.b-cdn.net https://codenewbie.forem.com https://coss.forem.com https://dumb.dev.to https://popcorn.forem.com https://design.forem.com https://maker.forem.com https://bookclub.forem.com https://village.forem.com https://crypto.forem.com https://bizarro.forem.com https://dev.to https://future.forem.com https://music.forem.com https://gg.forem.com https://vibe.forem.com https://golf.forem.com https://scale.forem.com https://zeroday.forem.com https://open.forem.com https://wasp.forem.com https://hmpljs.forem.com https://experimental.forem.com https://parenting.forem.com https://journal.forem.com https://grow.forem.com https://devbrasil.forem.com https://stormkit.forem.com https://dev.to",
+        "reason": "frame-ancestors: https://forem.com https://core.forem.com https://version-feb-19-mjhc7.b-cdn.net https://codenewbie.forem.com https://coss.forem.com https://dumb.dev.to https://popcorn.forem.com https://design.forem.com https://maker.forem.com https://bookclub.forem.com https://village.forem.com https://crypto.forem.com https://bizarro.forem.com https://dev.to https://future.forem.com https://music.forem.com https://gg.forem.com https://vibe.forem.com https://golf.forem.com https://scale.forem.com https://zeroday.forem.com https://open.forem.com https://wasp.forem.com https://hmpljs.forem.com https://experimental.forem.com https://parenting.forem.com https://journal.forem.com https://grow.forem.com https://devbrasil.forem.com https://stormkit.forem.com https://dev.to"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Zenn",
+      "url": "https://zenn.dev",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Qiita",
+      "url": "https://qiita.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Hashnode",
+      "url": "https://hashnode.com",
+      "iframe": {
+        "embeddable": true,
+        "xfo": "(none)",
+        "frameAncestors": "(none)",
+        "reason": "(no restriction)"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "IFRAME"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "CSS-Tricks",
+      "url": "https://css-tricks.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": true,
+        "type": "rich",
+        "note": "HTMLリンクタグで発見",
+        "method": "discovery"
+      },
+      "displayMethod": "OEMBED"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Smashing Magazine",
+      "url": "https://www.smashingmagazine.com",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: SAMEORIGIN"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "freeCodeCamp",
+      "url": "https://www.freecodecamp.org",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "SAMEORIGIN",
+        "frameAncestors": "'self'",
+        "reason": "X-Frame-Options: SAMEORIGIN + frame-ancestors"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "web.dev",
+      "url": "https://web.dev",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "(none)",
+        "frameAncestors": "'self' https://developers.google.com/_d/analytics-iframe",
+        "reason": "frame-ancestors: 'self' https://developers.google.com/_d/analytics-iframe"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    },
+    {
+      "category": "技術ブログ/個人サイト",
+      "name": "Hatenablog (example)",
+      "url": "https://blog.hatena.ne.jp",
+      "iframe": {
+        "embeddable": false,
+        "xfo": "DENY",
+        "frameAncestors": "(none)",
+        "reason": "X-Frame-Options: DENY"
+      },
+      "oembed": {
+        "supported": false,
+        "note": "oEmbed未対応",
+        "method": "discovery"
+      },
+      "displayMethod": "NONE"
+    }
+  ],
+  "summary": {
+    "total": 50,
+    "iframe": 9,
+    "oembed": 5,
+    "none": 36,
+    "supportRate": "28.0"
+  }
+}

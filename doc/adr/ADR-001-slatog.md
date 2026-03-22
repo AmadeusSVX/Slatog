@@ -423,6 +423,89 @@ FS-1: 成功率40%未満
   → プロキシ方式を主軸に再設計（追加ADR発行）
 ```
 
+### FS実施結果（2026-03-21）
+
+**FS-1結果**: 成功率18.0%（9/50サイト）。SNS 0%、EC/サービス 0%、ニュース 10%、ドキュメント 70%、技術ブログ 10%。詳細は `doc/fs/fs1-report.md` を参照。
+
+**FS-2結果**: 全検証項目PASS。depth maskテクニック（`colorWrite: false` + `depthWrite: true` + `renderOrder: -1` の平面メッシュ）により、CSS3DRendererのiframeとWebGLRendererの3Dオブジェクトの深度整合を実現。前面描画・入力イベント共存・60fps維持を確認。詳細は `doc/fs/fs2-report.md` を参照。
+
+**判定**: FS-1成功率40%未満 → 下記D12（プロキシ方式）を追加決定。
+
+### D12: Webページ表示 — ハイブリッドiframe＋ヘッダ除去プロキシ
+
+FS-1/FS-2の結果を受けて、D6（CSS3DRenderer + iframe）を拡張する。
+
+**表示方式の判定フロー**:
+
+```
+1. クライアントがURL入力
+2. GET /api/proxy/check?url={url}
+   サーバがHEADリクエストでX-Frame-Options / frame-ancestorsを確認
+3a. embeddable=true  → iframe.src = 元URL（直接埋め込み）
+3b. embeddable=false AND プロキシ有効 → iframe.src = /api/proxy?url=...（プロキシ経由）
+3c. embeddable=false AND プロキシ無効 → エラー表示「このURLはSlatog非対応です」
+```
+
+**プロキシの設計原則**:
+
+- **デフォルトOFF**: プロキシは環境変数 `SLATOG_PROXY=1` で明示的に有効化する。無効時はiframe直接埋め込み可能なサイトのみ対応
+- **HTMLのみプロキシ**: HTML本体のみをサーバ経由で取得し、`X-Frame-Options`と`frame-ancestors`を除去。CSS/JS/画像はブラウザが元サーバから直接取得する（`<base href>` タグ挿入による相対パス解決）
+- **ナビゲーションインターセプト**: iframe内のリンククリックをプロキシ経由URLにリダイレクトするスクリプトをHTML内に注入
+- **キャッシュ**: 同一URL 5分間キャッシュ。同一ルーム内の複数ユーザーはキャッシュヒット
+- **SSRF防止**: プライベートIP・localhost・内部ホスト名を拒否
+
+**プロキシ無効時の非対応エラー**:
+
+```
+/api/proxy/check レスポンス:
+  { embeddable: false, supported: false, url: "...", proxyUrl: null }
+
+クライアント側:
+  supported=false の場合、3D空間にiframeを配置せず、
+  「このURLはiframe埋め込みが許可されていないため、Slatogでは表示できません」
+  というエラーメッセージをUI上に表示する。
+```
+
+**サーバ構成（D11更新）**:
+
+```
+Node.js プロセス
+├── [A] 静的アセット配信
+├── [B] REST API
+├── [C] WebSocketシグナリング
+├── [D] KVストア（インメモリMap）
+└── [E] Proxy（デフォルトOFF、SLATOG_PROXY=1で有効化）
+    ├── GET /api/proxy/check?url=...  → 埋め込み可否判定（常時有効）
+    └── GET /api/proxy?url=...        → ヘッダ除去プロキシ（SLATOG_PROXY=1時のみ）
+```
+
+**既知の制約（プロキシ有効時）**:
+
+| 制約 | 影響 |
+|------|------|
+| iframe内JSのfetch/XHR | CORS失敗の可能性。SPA的コンテンツの一部が動作しない |
+| Cookie/認証 | プロキシ経由ではユーザーCookieが送信されない |
+| CSP script-src | 注入スクリプト実行のためプロキシ応答からscript-srcを除去 |
+
+**根拠**: プロキシはサーバ負荷を増加させるため、デフォルトOFFとする。iframe直接埋め込みが可能なサイト（ドキュメント系、成功率70%）はプロキシ不要で動作する。プロキシが必要な運用環境でのみ有効化することで、サーバコストを制御可能にする。将来のマルチプラットフォーム展開（Quest VR等）ではブラウザ拡張に依存できないため、サーバサイドプロキシが唯一の汎用的解決策である。
+
+**深度整合（FS-2結果の反映）**:
+
+iframe（CSS3DObject）とWebGLオブジェクトの深度整合には、depth maskテクニックを使用する:
+
+```javascript
+// iframe位置と同一サイズ・位置のPlaneGeometryをWebGLシーンに追加
+const mask = new THREE.Mesh(
+  new THREE.PlaneGeometry(iframeWidth, iframeHeight),
+  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
+);
+mask.position.copy(cssObject.position);
+mask.scale.copy(cssObject.scale);
+mask.renderOrder = -1; // 他のWebGLオブジェクトより先に描画
+```
+
+これによりiframe背後のWebGLオブジェクトが正しくオクルージョンされ、iframe前面のオブジェクト（ストローク、アバター）は可視のまま維持される。直接iframe・プロキシiframeの両方で同一のdepth mask方式が適用される。
+
 ## FS後の実装ロードマップ
 
 ### Phase 1: コア通信基盤（1〜2週間）
