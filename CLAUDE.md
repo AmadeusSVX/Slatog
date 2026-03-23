@@ -5,28 +5,28 @@
 ### テスト
 
 ```bash
-make test
+npm test
 ```
 
 ### リンター
 
 ```bash
-make lint
+npm run lint
 ```
 
 ### フォーマッター
 
 ```bash
-make format
+npm run format
 ```
 
 ### セットアップ
 
 ```bash
-make install
+npm install
 ```
 
-バックエンド・フロントエンドの依存パッケージを一括インストールする。
+依存パッケージをインストールする。
 
 ## 設計仕様（ADR）
 

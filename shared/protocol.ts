@@ -1,4 +1,4 @@
-// Signaling protocol message types (D1, D2, D7, D8)
+// Signaling protocol message types (D1, D2, D7, D8, D28)
 
 // --- Client → Server ---
 
@@ -32,12 +32,18 @@ export interface IceCandidateMsg {
   candidate: RTCIceCandidateInit;
 }
 
+// D28: Client notifies server of sticker placement for rate limiting
+export interface StickerAddMsg {
+  type: "STICKER_ADD";
+}
+
 export type ClientMessage =
   | JoinRoomMsg
   | LeaveRoomMsg
   | SdpOfferMsg
   | SdpAnswerMsg
-  | IceCandidateMsg;
+  | IceCandidateMsg
+  | StickerAddMsg;
 
 // --- Server → Client ---
 
@@ -83,6 +89,17 @@ export interface ErrorMsg {
   message: string;
 }
 
+// D28: Sticker rate limit notification
+export interface StickerRateLimitedMsg {
+  type: "STICKER_RATE_LIMITED";
+}
+
+// D28: Sticker BAN notification
+export interface StickerBannedMsg {
+  type: "STICKER_BANNED";
+  reason: string;
+}
+
 export type ServerMessage =
   | RoomJoinedMsg
   | PeerJoinedMsg
@@ -90,7 +107,9 @@ export type ServerMessage =
   | SdpRelayMsg
   | IceCandidateRelayMsg
   | HostMigrationMsg
-  | ErrorMsg;
+  | ErrorMsg
+  | StickerRateLimitedMsg
+  | StickerBannedMsg;
 
 // --- Shared ---
 

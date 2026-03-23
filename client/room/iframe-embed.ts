@@ -12,7 +12,7 @@ import type { SceneContext } from "./scene.js";
 
 const IFRAME_WIDTH = 1024;
 const IFRAME_HEIGHT = 768;
-const CSS_SCALE = 1;
+const CSS_SCALE = 1.5;
 
 export interface EmbedResult {
   cssObject: CSS3DObject;

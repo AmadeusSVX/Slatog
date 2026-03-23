@@ -1,6 +1,9 @@
 // Room page entry point — state-based multiplayer sync
 // Architecture: modules mutate RoomState → onChange → main.ts broadcasts full snapshot
 // Reception: applySnapshot (CRDT merge) → reconcileUI (diff-based incremental updates)
+// D22: Chat toggle — chat_enabled fetched from server features API
+// D23: Text stickers — wall-placed text via raycast
+// D24: Sticker author toggle — localStorage setting
 
 import { SLATOG_CONFIG } from "../../shared/config.js";
 import { SignalingClient } from "./signaling-client.js";
@@ -13,6 +16,7 @@ import { AvatarManager } from "./avatar.js";
 import { ChatManager } from "./chat.js";
 import { ChatBubbleManager } from "./chat-bubble.js";
 import { PenManager } from "./pen.js";
+import { StickerManager } from "./sticker.js";
 import type { SceneContext } from "./scene.js";
 import type { EmbedResult } from "./iframe-embed.js";
 import type { ServerMessage, PeerInfo } from "../../shared/protocol.js";
@@ -56,6 +60,9 @@ let pendingSnapshot: StateSnapshotData | null = null;
 let sceneReady = false;
 let myColorIndex = 0; // D15: will be assigned on room join
 
+// D22: Chat feature toggle (fetched from server)
+let chatEnabled = true; // default on, will be updated from features API
+
 // --- UI setup ---
 const app = document.getElementById("app")!;
 app.innerHTML = `
@@ -65,9 +72,18 @@ app.innerHTML = `
       <span class="room-url-display" title="${escapeHtml(urlKey)}">${escapeHtml(urlKey)}</span>
       <span class="peer-count" id="peer-count">接続中...</span>
       <button id="pen-toggle" class="pen-toggle" title="ペン描画">&#9998;</button>
+      <button id="sticker-toggle" class="sticker-toggle" title="ステッカー">&#128203;</button>
+      <button id="settings-toggle" class="settings-toggle" title="設定">&#9881;</button>
     </div>
     <div id="peer-list"></div>
     <div id="embed-error" class="embed-error" style="display:none"></div>
+    <div id="settings-panel" class="settings-panel" style="display:none">
+      <div class="settings-header">設定</div>
+      <label class="settings-item">
+        <input type="checkbox" id="show-author-toggle" checked />
+        ステッカーにユーザー名を表示
+      </label>
+    </div>
     <div id="debug-log"></div>
   </div>
 `;
@@ -79,6 +95,10 @@ const peerListEl = document.getElementById("peer-list")!;
 const embedErrorEl = document.getElementById("embed-error")!;
 const debugLogEl = document.getElementById("debug-log")!;
 const penToggleBtn = document.getElementById("pen-toggle")!;
+const stickerToggleBtn = document.getElementById("sticker-toggle")!;
+const settingsToggleBtn = document.getElementById("settings-toggle")!;
+const settingsPanel = document.getElementById("settings-panel")!;
+const showAuthorToggle = document.getElementById("show-author-toggle") as HTMLInputElement;
 
 function log(msg: string): void {
   const line = document.createElement("div");
@@ -114,16 +134,53 @@ let avatarMgr: AvatarManager | null = null;
 let chatMgr: ChatManager | null = null;
 let bubbleMgr: ChatBubbleManager | null = null;
 let penMgr: PenManager | null = null;
+let stickerMgr: StickerManager | null = null;
 let penEnabled = false;
+let stickerEnabled = false;
 
 // --- Pen toggle ---
 penToggleBtn.addEventListener("click", () => {
   penEnabled = !penEnabled;
   penMgr?.setEnabled(penEnabled);
   penToggleBtn.classList.toggle("active", penEnabled);
-  if (sceneCtx) {
-    sceneCtx.controls.enabled = !penEnabled;
+  // Disable sticker mode when pen is enabled
+  if (penEnabled && stickerEnabled) {
+    stickerEnabled = false;
+    stickerMgr?.setEnabled(false);
+    stickerToggleBtn.classList.remove("active");
   }
+  if (sceneCtx) {
+    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled;
+  }
+});
+
+// --- Sticker toggle (D23) ---
+stickerToggleBtn.addEventListener("click", () => {
+  stickerEnabled = !stickerEnabled;
+  stickerMgr?.setEnabled(stickerEnabled);
+  stickerToggleBtn.classList.toggle("active", stickerEnabled);
+  // Disable pen mode when sticker is enabled
+  if (stickerEnabled && penEnabled) {
+    penEnabled = false;
+    penMgr?.setEnabled(false);
+    penToggleBtn.classList.remove("active");
+  }
+  if (sceneCtx) {
+    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled;
+  }
+});
+
+// --- Settings toggle (D24) ---
+settingsToggleBtn.addEventListener("click", () => {
+  const visible = settingsPanel.style.display !== "none";
+  settingsPanel.style.display = visible ? "none" : "block";
+  settingsToggleBtn.classList.toggle("active", !visible);
+});
+settingsPanel.addEventListener("pointerdown", (e) => e.stopPropagation());
+
+// D24: Author toggle
+showAuthorToggle.addEventListener("change", () => {
+  stickerMgr?.setShowAuthor(showAuthorToggle.checked);
 });
 
 // ==========================================================================
@@ -235,18 +292,20 @@ function applySnapshotAndReconcile(msg: StateSnapshotData): void {
 }
 
 function reconcileUI(prev: RoomStateSnapshot, curr: RoomStateSnapshot): void {
-  // --- Chat messages ---
-  const prevChatKeys = new Set(Object.keys(prev.chatMessages));
-  const currChatKeys = new Set(Object.keys(curr.chatMessages));
+  // --- Chat messages (D22: only if chat enabled) ---
+  if (chatEnabled) {
+    const prevChatKeys = new Set(Object.keys(prev.chatMessages));
+    const currChatKeys = new Set(Object.keys(curr.chatMessages));
 
-  for (const key of currChatKeys) {
-    if (!prevChatKeys.has(key)) {
-      chatMgr?.appendMessage(curr.chatMessages[key].value);
+    for (const key of currChatKeys) {
+      if (!prevChatKeys.has(key)) {
+        chatMgr?.appendMessage(curr.chatMessages[key].value);
+      }
     }
-  }
-  for (const key of prevChatKeys) {
-    if (!currChatKeys.has(key)) {
-      chatMgr?.removeMessage(key);
+    for (const key of prevChatKeys) {
+      if (!currChatKeys.has(key)) {
+        chatMgr?.removeMessage(key);
+      }
     }
   }
 
@@ -265,9 +324,41 @@ function reconcileUI(prev: RoomStateSnapshot, curr: RoomStateSnapshot): void {
     }
   }
 
+  // --- Text stickers (D23) ---
+  const prevStickerKeys = new Set(Object.keys(prev.textStickers ?? {}));
+  const currStickerKeys = new Set(Object.keys(curr.textStickers ?? {}));
+
+  for (const key of currStickerKeys) {
+    if (!prevStickerKeys.has(key)) {
+      stickerMgr?.renderSticker(curr.textStickers[key].value);
+    }
+  }
+  for (const key of prevStickerKeys) {
+    if (!currStickerKeys.has(key)) {
+      stickerMgr?.removeSticker(key);
+    }
+  }
+
   // --- Scroll ---
   if (curr.scrollPosition.timestamp > prev.scrollPosition.timestamp) {
     scrollSync?.applyRemoteScroll(curr.scrollPosition.value.x, curr.scrollPosition.value.y);
+  }
+}
+
+// ==========================================================================
+// D22: Fetch features from server
+// ==========================================================================
+
+async function fetchFeatures(): Promise<void> {
+  try {
+    const res = await fetch(`${SLATOG_CONFIG.API_BASE}/api/rooms/${encodeURIComponent(urlKey!)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.features) {
+      chatEnabled = data.features.chat_enabled !== false;
+    }
+  } catch {
+    // Default to enabled on fetch failure
   }
 }
 
@@ -308,6 +399,13 @@ function handleSignalingMessage(msg: ServerMessage): void {
       break;
     case "ERROR":
       log(`ERROR: ${msg.message}`);
+      break;
+    case "STICKER_RATE_LIMITED":
+      log("Sticker rate limited — cooldown active");
+      stickerMgr?.showRateLimitNotice();
+      break;
+    case "STICKER_BANNED":
+      log(`Banned: ${msg.reason}`);
       break;
   }
 }
@@ -373,17 +471,38 @@ function handlePeerLeft(peerId: string): void {
 async function initScene(): Promise<void> {
   if (sceneCtx) return;
 
+  // D22: Fetch features before scene init to know chat state
+  await fetchFeatures();
+
   sceneCtx = createScene(sceneContainer);
   log("3D scene initialized");
 
   avatarMgr = new AvatarManager(sceneCtx, peerManager, myPeerId);
-  chatMgr = new ChatManager(roomContainer, roomState, myPeerId, myPeerName, myColorIndex);
-  bubbleMgr = new ChatBubbleManager(sceneCtx.scene, avatarMgr, myPeerId);
+
+  // D22: Only create chat-related managers if chat is enabled
+  if (chatEnabled) {
+    chatMgr = new ChatManager(roomContainer, roomState, myPeerId, myPeerName, myColorIndex);
+    bubbleMgr = new ChatBubbleManager(sceneCtx.scene, avatarMgr, myPeerId);
+    chatMgr.setOnNewMessage((msg) => {
+      bubbleMgr?.showBubble(msg);
+    });
+  } else {
+    log("Chat disabled by server configuration");
+  }
+
   penMgr = new PenManager(sceneCtx, roomState, myPeerId, myColorIndex);
 
-  chatMgr.setOnNewMessage((msg) => {
-    bubbleMgr?.showBubble(msg);
+  // D23: Sticker manager
+  const myColor = USER_COLORS[myColorIndex % USER_COLORS.length];
+  stickerMgr = new StickerManager(sceneCtx, roomState, myPeerId, myPeerName, myColor);
+
+  // D28: Wire sticker placement to server rate limiting
+  stickerMgr.setOnStickerPlace(() => {
+    signaling.send({ type: "STICKER_ADD" });
   });
+
+  // D24: Sync author toggle UI with stored preference
+  showAuthorToggle.checked = stickerMgr.getShowAuthor();
 
   for (const [peerId, name] of peerNames) {
     if (peerId !== myPeerId) {
@@ -449,8 +568,11 @@ async function restoreStateFromCache(): Promise<void> {
       const currSnap = roomState.toSnapshot();
       reconcileUI(prevSnap, currSnap);
       // Restore visual elements
-      chatMgr?.restoreHistory();
+      if (chatEnabled) {
+        chatMgr?.restoreHistory();
+      }
       penMgr?.restoreStrokes();
+      stickerMgr?.restoreStickers();
       log("State restored from cache");
     }
   } catch {
@@ -526,6 +648,7 @@ window.addEventListener("beforeunload", () => {
   signaling.send({ type: "LEAVE_ROOM" });
   if (broadcastTimer) clearTimeout(broadcastTimer);
   stopStateCacheSync();
+  stickerMgr?.dispose();
   penMgr?.dispose();
   bubbleMgr?.dispose();
   chatMgr?.dispose();

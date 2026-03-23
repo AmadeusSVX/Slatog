@@ -80,8 +80,8 @@ export function createScene(container: HTMLElement): SceneContext {
   controls.maxDistance = 4000;
 
   // --- D16: Lighting ---
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
   dirLight.position.set(500, 800, 1000);
   scene.add(dirLight);
 

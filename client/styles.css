@@ -394,3 +394,128 @@ body {
   outline: none;
   border-color: #5b8def;
 }
+
+/* --- Sticker toggle button (D23) --- */
+
+.sticker-toggle {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sticker-toggle:hover {
+  border-color: #5b8def;
+  color: #5b8def;
+}
+
+.sticker-toggle.active {
+  background: #5b8def;
+  color: #fff;
+  border-color: #5b8def;
+}
+
+/* --- Sticker input panel (D23) --- */
+
+#sticker-input-panel {
+  position: fixed;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+#sticker-input-panel input {
+  width: 280px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #151520;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+#sticker-input-panel input:focus {
+  outline: none;
+  border-color: #5b8def;
+}
+
+/* --- Settings toggle + panel (D24) --- */
+
+.settings-toggle {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.settings-toggle:hover {
+  border-color: #5b8def;
+  color: #5b8def;
+}
+
+.settings-toggle.active {
+  background: #5b8def;
+  color: #fff;
+  border-color: #5b8def;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 40px;
+  right: 210px;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.75rem;
+  z-index: 100;
+  min-width: 220px;
+}
+
+.settings-header {
+  font-size: 0.8rem;
+  color: #777;
+  border-bottom: 1px solid #222;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.settings-item input[type="checkbox"] {
+  accent-color: #5b8def;
+}
+
+/* --- D28: Rate limit notice --- */
+
+#sticker-rate-limit-notice {
+  position: fixed;
+  bottom: 175px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: rgba(200, 50, 50, 0.9);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}

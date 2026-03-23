@@ -35,6 +35,8 @@ export interface RoomStateSnapshot {
   scrollPosition: { value: { x: number; y: number }; timestamp: number };
   chatMessages: Record<string, { value: ChatMessageEntry; timestamp: number }>;
   strokes: Record<string, { value: StrokeEntry; timestamp: number }>;
+  textStickers: Record<string, { value: TextStickerEntry; timestamp: number }>; // D23
+  bannedIps: Record<string, { value: BannedIPEntry; timestamp: number }>; // D28
 }
 
 export interface ChatMessageEntry {
@@ -53,4 +55,25 @@ export interface StrokeEntry {
   color: string;
   width: number;
   timestamp: number;
+}
+
+// D28: BAN entry for IP-based access control
+export interface BannedIPEntry {
+  ip: string; // IPv4 or IPv6
+  banned_at: number; // Unix ms
+  expires_at: number; // Unix ms (0 = until server restart)
+  reason: string; // e.g. "sticker_spam"
+}
+
+// D23: Text sticker placed on room walls
+export interface TextStickerEntry {
+  id: string;
+  author_peer_id: string;
+  author_name: string;
+  color: string; // D15 user color hex
+  text: string; // UTF-8, max 140 chars
+  position: { x: number; y: number; z: number };
+  normal: { x: number; y: number; z: number };
+  show_author: boolean; // D24
+  timestamp: number; // Unix ms
 }

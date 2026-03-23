@@ -7,7 +7,8 @@
 Slatogは、特定のURLをキーとしてルームを生成し、最大10人のユーザーがThree.jsベースの3D空間内で以下のコミュニケーションを行えるWebアプリケーションです:
 
 - **Webページ共同閲覧** — CSS3DRenderer + iframeで壁面にWebページを配置
-- **テキストチャット** — 3Dアバター吹き出し + 2Dチャットウィンドウの二重表示
+- **テキストチャット** — 3Dアバター吹き出し + 2Dチャットウィンドウの二重表示（環境変数でON/OFF切替可能）
+- **テキストステッカー** — 3D空間の壁面にテキストを貼り付けるコミュニケーション手段
 - **ペン描画** — 3D空間内でのフリーハンド描画（Line2 + LineMaterial、太い線幅対応）
 - **アバター移動** — 20Hz更新のリアルタイム位置同期（ユーザーカラー統一）
 - **ユーザー識別** — localStorage永続化によるユーザー名・ID管理
@@ -38,8 +39,9 @@ Slatogは、特定のURLをキーとしてルームを生成し、最大10人の
 
 ### ルーム状態
 
-- 64KB上限のバジェット管理（メタデータ1KB + チャット16KB + ストローク残り）
+- 64KB上限のバジェット管理（メタデータ1KB + 63KB共有プール: チャット・ステッカー・ストローク・BANリスト）
 - Last Write Wins (LWW) による競合解決
+- ステッカー連投規制（レートリミット）+ 自動BANシステム
 
 ## 技術スタック
 
@@ -73,12 +75,19 @@ npm run dev:client
 
 ## 環境変数
 
-| 変数                         | デフォルト | 説明                                                 |
-| ---------------------------- | ---------- | ---------------------------------------------------- |
-| `PORT`                       | `3000`     | サーバリッスンポート                                 |
-| `SLATOG_PROXY`               | (無効)     | `1`に設定でプロキシ有効化                            |
-| `SLATOG_SESSION_TTL`         | `-1`       | 非アクティブセッション自動削除までの秒数（-1で無効） |
-| `SLATOG_STATE_SYNC_INTERVAL` | `30000`    | ステートキャッシュ送信間隔（ms、クライアント側設定） |
+| 変数                           | デフォルト | 説明                                                 |
+| ------------------------------ | ---------- | ---------------------------------------------------- |
+| `PORT`                         | `3000`     | サーバリッスンポート                                 |
+| `SLATOG_PROXY`                 | (無効)     | `1`に設定でプロキシ有効化                            |
+| `SLATOG_CHAT`                  | `1`        | `0`に設定でチャット機能無効化                        |
+| `SLATOG_SESSION_TTL`           | `-1`       | 非アクティブセッション自動削除までの秒数（-1で無効） |
+| `SLATOG_STATE_SYNC_INTERVAL`   | `30000`    | ステートキャッシュ送信間隔（ms、クライアント側設定） |
+| `SLATOG_STICKER_RATE_WINDOW`   | `30`       | ステッカー連投監視ウィンドウ（秒）                   |
+| `SLATOG_STICKER_RATE_LIMIT`    | `5`        | ウィンドウ内最大ステッカー投稿数                     |
+| `SLATOG_STICKER_BAN_ENABLED`   | `1`        | 自動BAN有効/無効（0で無効）                          |
+| `SLATOG_STICKER_BAN_THRESHOLD` | `2`        | BAN発動までの規制回数                                |
+| `SLATOG_STICKER_BAN_MODE`      | `ban`      | `kick`（再接続可）or `ban`（IP BAN）                 |
+| `SLATOG_STICKER_BAN_DURATION`  | `3600`     | BAN持続時間（秒、0で永久BAN）                        |
 
 ## コマンド
 
@@ -111,7 +120,8 @@ npm run build      # プロダクションビルド
 │   │   ├── avatar.ts              # D15 アバター3D表示 + ユーザーカラー
 │   │   ├── chat.ts                # D15 チャットUI + ユーザーカラー
 │   │   ├── chat-bubble.ts         # 3D吹き出し（SpriteMaterial + CanvasTexture）
-│   │   └── pen.ts                 # D15+D17+D21 ペン描画（Line2 + LineMaterial + 壁面クランプ）
+│   │   ├── pen.ts                 # D15+D17+D21 ペン描画（Line2 + LineMaterial + 壁面クランプ）
+│   │   └── sticker.ts             # D23+D24 テキストステッカー（CanvasTexture + Raycast配置）
 │   └── styles.css
 ├── server/
 │   ├── index.ts          # サーバエントリポイント + D20 TTLタイマー
@@ -145,6 +155,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 | `SDP_OFFER`     | SDP Offerの中継                                |
 | `SDP_ANSWER`    | SDP Answerの中継                               |
 | `ICE_CANDIDATE` | ICE Candidateの中継                            |
+| `STICKER_ADD`   | ステッカー貼付通知（レートリミット用）         |
 
 ### サーバ → クライアント
 
@@ -157,13 +168,15 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 | `ICE_CANDIDATE`            | ICE Candidate中継                                  |
 | `HOST_MIGRATION`           | ホスト移行通知                                     |
 | `ERROR`                    | エラー通知                                         |
+| `STICKER_RATE_LIMITED`     | ステッカー連投規制通知                             |
+| `STICKER_BANNED`           | ステッカースパムによるBAN通知                      |
 
 ## API
 
 | エンドポイント                  | 説明                                                    |
 | ------------------------------- | ------------------------------------------------------- |
 | `GET /api/rooms`                | URL一覧（アクティブ優先、ピア数降順、非アクティブ含む） |
-| `GET /api/rooms/:urlKey`        | 特定URLのセッション一覧                                 |
+| `GET /api/rooms/:urlKey`        | 特定URLのセッション一覧 + features（chat_enabled等）    |
 | `POST /api/rooms/:roomId/state` | ステートキャッシュ送信（ホストから30秒間隔）            |
 | `GET /api/rooms/:roomId/state`  | ステートキャッシュ取得（セッション復元用）              |
 | `GET /api/proxy/check?url=...`  | URL埋め込み可否チェック                                 |
@@ -198,7 +211,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 
 - [x] ルーム状態CRDT実装（LWWRegister, LWWMap）
 - [x] DataChannelメッセージプロトコル定義（state + realtimeチャネル）
-- [x] 64KBステートバジェット管理（チャット16KB上限 + ストローク残余バジェット）
+- [x] 64KBステートバジェット管理（63KB共有プール: 優先度ベース削除 chat→sticker→stroke→bannedIps）
 - [x] アバター位置同期（unreliableチャネル、20Hz、球体メッシュ + 名前ラベル）
 - [x] テキストチャット同期（reliableチャネル、280文字制限）
 - [x] チャットウィンドウUI（2D HTML/CSS、画面左下固定パネル）
@@ -206,6 +219,13 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] ペンストローク同期（reliableチャネル、3D空間内フリーハンド描画）
 - [x] 途中参加者へのスナップショット送信（チャット履歴・ストローク含む）
 - [x] D18: サーバサイドステートキャッシュ（ホストから30秒間隔で送信）
+- [x] D22: チャット機能トグル（環境変数`SLATOG_CHAT` + features API + クライアント側UI制御）
+- [x] D23: テキストステッカー同期（reliableチャネルでのステッカー送受信）
+
+### Phase 2への追加（3D空間 + Webページ表示）
+
+- [x] D23: テキストステッカー描画（CanvasTexture + PlaneGeometry + Raycast壁面配置）
+- [x] D24: ステッカーユーザー名表示トグル（localStorage設定 + 設定パネルUI）
 
 ### Phase 4: ルーム管理 + LP完成
 
@@ -214,7 +234,15 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] D19: セッション復元（参加者0のセッション表示 + ステートリストア）
 - [x] D20: セッション自動削除（TTLベース、`SLATOG_SESSION_TTL`環境変数）
 
-### Phase 5: 未着手
+### Phase 5: ライティング・ステッカー改善・荒らし対策（ADR-004）
+
+- [x] D25: ディレクショナルライト強度復元（0.3→0.6）
+- [x] D26: テキストステッカー背景透過・枠線なし・テキストアウトライン追加
+- [x] D27: ステッカー貼付後のテキストボックスクリア（荒らし連打防止）
+- [x] D28: ステッカー連投規制（サーバ側レートリミット）+ 自動BANシステム
+- [x] D28: enforcebudget優先度ベース削除（chat→sticker→stroke→bannedIps）
+
+### Phase 6: 未着手
 
 - [ ] 統合テスト + UX改善
 
@@ -224,6 +252,9 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 
 - [ADR-001](doc/adr/ADR-001-slatog.md) — 初期アーキテクチャ（WebRTC, CRDT, シグナリング, プロキシ等）
 - [ADR-002](doc/adr/ADR-002-enhancements.md) — ユーザー識別・ルーム空間・セッション永続化
+- [ADR-003](doc/adr/ADR-003-text-sticker.md) — チャットトグル・テキストステッカー・ユーザー名表示設定
+- [ADR-004](doc/adr/ADR-004-sticker-fixes.md) — ライティング復元・テキストステッカー改善・荒らし対策
+- [ADR-005](doc/adr/ADR-005-pen-range-and-font-size.md) — ペン描画距離の短縮・テキストステッカーフォントサイズ調整
 
 ## ライセンス
 

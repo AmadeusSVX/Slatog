@@ -1,10 +1,20 @@
-// D11 [B], D18, D19: REST API
+// D11 [B], D18, D19, D22: REST API
 
 import express from "express";
 import type { Express } from "express";
 import type { RoomStore } from "./store.js";
 
 const STATE_MAX_SIZE = 65536; // 64KB
+
+// D22: Chat toggle — environment variable (default: enabled)
+function isChatEnabled(): boolean {
+  return process.env.SLATOG_CHAT !== "0";
+}
+
+// D12: Proxy toggle
+function isProxyEnabled(): boolean {
+  return process.env.SLATOG_PROXY === "1";
+}
 
 export function setupApi(app: Express, store: RoomStore): void {
   // JSON body parser for state cache endpoint
@@ -15,10 +25,17 @@ export function setupApi(app: Express, store: RoomStore): void {
     res.json(store.getAllUrls());
   });
 
-  // GET /api/rooms/:urlKey — sessions for a specific URL
+  // GET /api/rooms/:urlKey — sessions for a specific URL + D22 features
   app.get("/api/rooms/:urlKey", (req, res) => {
     const urlKey = decodeURIComponent(req.params.urlKey);
-    res.json(store.getSessionsByUrl(urlKey));
+    const sessions = store.getSessionsByUrl(urlKey);
+    res.json({
+      sessions,
+      features: {
+        chat_enabled: isChatEnabled(),
+        proxy_enabled: isProxyEnabled(),
+      },
+    });
   });
 
   // D18: POST /api/rooms/:roomId/state — state cache upload (host only)
