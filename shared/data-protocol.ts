@@ -37,6 +37,7 @@ export interface RoomStateSnapshot {
   strokes: Record<string, { value: StrokeEntry; timestamp: number }>;
   textStickers: Record<string, { value: TextStickerEntry; timestamp: number }>; // D23
   bannedIps: Record<string, { value: BannedIPEntry; timestamp: number }>; // D28
+  primitives: Record<string, { value: PrimitiveEntry; timestamp: number }>; // D32
 }
 
 export interface ChatMessageEntry {
@@ -65,13 +66,24 @@ export interface BannedIPEntry {
   reason: string; // e.g. "sticker_spam"
 }
 
+// D32: 3D primitive placed in room
+export interface PrimitiveEntry {
+  id: string; // UUID v4
+  author_peer_id: string;
+  color: string; // D15 user color hex
+  shape: "cone" | "cube" | "sphere" | "cylinder";
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number }; // Euler angles in radians
+  timestamp: number; // Unix ms
+}
+
 // D23: Text sticker placed on room walls
 export interface TextStickerEntry {
   id: string;
   author_peer_id: string;
   author_name: string;
   color: string; // D15 user color hex
-  text: string; // UTF-8, max 140 chars
+  text: string; // UTF-8, max 32 chars (D33: 140→32)
   font_size?: number; // D30: font size in px (default 24)
   position: { x: number; y: number; z: number };
   normal: { x: number; y: number; z: number };

@@ -8,6 +8,7 @@ import type {
   ChatMessageEntry,
   StrokeEntry,
   TextStickerEntry,
+  PrimitiveEntry,
   BannedIPEntry,
   RoomStateSnapshot,
 } from "./data-protocol.js";
@@ -21,6 +22,7 @@ export class RoomState {
   chatMessages: LWWMap<ChatMessageEntry>;
   strokes: LWWMap<StrokeEntry>;
   textStickers: LWWMap<TextStickerEntry>; // D23
+  primitives: LWWMap<PrimitiveEntry>; // D32
   bannedIps: LWWMap<BannedIPEntry>; // D28
   hostPeerId: string;
   private onChangeCallback: ((immediate: boolean) => void) | null = null;
@@ -31,6 +33,7 @@ export class RoomState {
     this.chatMessages = new LWWMap<ChatMessageEntry>();
     this.strokes = new LWWMap<StrokeEntry>();
     this.textStickers = new LWWMap<TextStickerEntry>();
+    this.primitives = new LWWMap<PrimitiveEntry>();
     this.bannedIps = new LWWMap<BannedIPEntry>();
     this.hostPeerId = "";
   }
@@ -54,6 +57,12 @@ export class RoomState {
 
   addTextSticker(sticker: TextStickerEntry): void {
     this.textStickers.set(sticker.id, sticker, sticker.timestamp);
+    this.enforceBudget();
+    this.onChangeCallback?.(true);
+  }
+
+  addPrimitive(primitive: PrimitiveEntry): void {
+    this.primitives.set(primitive.id, primitive, primitive.timestamp);
     this.enforceBudget();
     this.onChangeCallback?.(true);
   }
@@ -100,6 +109,7 @@ export class RoomState {
       chatMessages: this.chatMessages.toJSON(),
       strokes: this.strokes.toJSON(),
       textStickers: this.textStickers.toJSON(),
+      primitives: this.primitives.toJSON(),
       bannedIps: this.bannedIps.toJSON(),
     };
   }
@@ -150,6 +160,19 @@ export class RoomState {
       }
     }
 
+    // D32: Primitives — delete absent keys, then merge
+    const incomingPrimitiveKeys = new Set(Object.keys(snap.primitives ?? {}));
+    for (const key of this.primitives.keys()) {
+      if (!incomingPrimitiveKeys.has(key)) {
+        this.primitives.delete(key);
+      }
+    }
+    if (snap.primitives) {
+      for (const [key, entry] of Object.entries(snap.primitives)) {
+        this.primitives.set(key, entry.value, entry.timestamp);
+      }
+    }
+
     // D28: Banned IPs — delete absent keys, then merge
     const incomingBanKeys = new Set(Object.keys(snap.bannedIps ?? {}));
     for (const key of this.bannedIps.keys()) {
@@ -177,6 +200,7 @@ export class RoomState {
       byteSize(this.chatMessages.toJSON()) +
       byteSize(this.textStickers.toJSON()) +
       byteSize(this.strokes.toJSON()) +
+      byteSize(this.primitives.toJSON()) +
       byteSize(this.bannedIps.toJSON())
     );
   }
@@ -207,7 +231,12 @@ export class RoomState {
       this.strokes.removeOldest();
       return true;
     }
-    // Priority 4: banned_ips (lowest priority — last to be deleted)
+    // Priority 4: primitives (D32)
+    if (this.primitives.entriesByTime().length > 0) {
+      this.primitives.removeOldest();
+      return true;
+    }
+    // Priority 5: banned_ips (lowest priority — last to be deleted)
     if (this.bannedIps.entriesByTime().length > 0) {
       this.bannedIps.removeOldest();
       return true;

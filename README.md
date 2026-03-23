@@ -8,7 +8,8 @@ Slatogは、特定のURLをキーとしてルームを生成し、最大10人の
 
 - **Webページ共同閲覧** — CSS3DRenderer + iframeで壁面にWebページを配置
 - **テキストチャット** — 3Dアバター吹き出し + 2Dチャットウィンドウの二重表示（環境変数でON/OFF切替可能）
-- **テキストステッカー** — 3D空間の壁面にテキストを貼り付けるコミュニケーション手段
+- **テキストステッカー** — 3D空間の壁面にテキストを貼り付けるコミュニケーション手段（最大32文字）
+- **プリミティブ配置** — 3D空間に基本形状（円錐・立方体・球・円筒）を配置
 - **ペン描画** — 3D空間内でのフリーハンド描画（Line2 + LineMaterial、太い線幅対応）
 - **アバター移動** — 20Hz更新のリアルタイム位置同期（ユーザーカラー統一）
 - **ユーザー識別** — localStorage永続化によるユーザー名・ID管理
@@ -39,7 +40,7 @@ Slatogは、特定のURLをキーとしてルームを生成し、最大10人の
 
 ### ルーム状態
 
-- 64KB上限のバジェット管理（メタデータ1KB + 63KB共有プール: チャット・ステッカー・ストローク・BANリスト）
+- 64KB上限のバジェット管理（メタデータ1KB + 63KB共有プール: チャット・ステッカー・ストローク・プリミティブ・BANリスト）
 - Last Write Wins (LWW) による競合解決
 - ステッカー連投規制（レートリミット）+ 自動BANシステム
 
@@ -121,7 +122,8 @@ npm run build      # プロダクションビルド
 │   │   ├── chat.ts                # D15 チャットUI + ユーザーカラー
 │   │   ├── chat-bubble.ts         # 3D吹き出し（SpriteMaterial + CanvasTexture）
 │   │   ├── pen.ts                 # D15+D17+D21+D29 ペン描画（Line2 + LineMaterial + 壁面クランプ + 近距離描画）
-│   │   └── sticker.ts             # D23+D24+D30 テキストステッカー（CanvasTexture + Raycast配置 + フォントサイズ調整）
+│   │   ├── primitive.ts           # D31+D32 プリミティブ配置（Raycast + MeshStandardMaterial + 壁面クランプ）
+│   │   └── sticker.ts             # D23+D24+D30+D33 テキストステッカー（CanvasTexture + Raycast配置 + フォントサイズ調整 + 32文字制限）
 │   └── styles.css
 ├── server/
 │   ├── index.ts          # サーバエントリポイント + D20 TTLタイマー
@@ -247,7 +249,13 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] D29: ペン描画距離の短縮（Raycaster far=100、空中描画対応、壁面クランプ維持）
 - [x] D30: テキストステッカーフォントサイズ変更（スライダーUI、localStorage保存、CanvasTexture動的計算）
 
-### Phase 7: 未着手
+### Phase 7: プリミティブ配置・ステッカー制限縮小（ADR-006）
+
+- [x] D31: プリミティブ配置UI（4種選択 + Raycast配置 + MeshStandardMaterial + 壁面クランプ）
+- [x] D32: プリミティブのRoomState追加・reliableチャネルでの同期・64KBバジェット管理
+- [x] D33: テキストステッカー文字数制限を140文字→32文字に縮小
+
+### Phase 8: 未着手
 
 - [ ] 統合テスト + UX改善
 
@@ -260,6 +268,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [ADR-003](doc/adr/ADR-003-text-sticker.md) — チャットトグル・テキストステッカー・ユーザー名表示設定
 - [ADR-004](doc/adr/ADR-004-sticker-fixes.md) — ライティング復元・テキストステッカー改善・荒らし対策
 - [ADR-005](doc/adr/ADR-005-pen-range-and-font-size.md) — ペン描画距離の短縮・テキストステッカーフォントサイズ調整
+- [ADR-006](doc/adr/ADR-006-primitives-and-sticker-limit.md) — プリミティブ配置モードとテキストステッカー文字数制限
 
 ## ライセンス
 

@@ -17,6 +17,7 @@ import { ChatManager } from "./chat.js";
 import { ChatBubbleManager } from "./chat-bubble.js";
 import { PenManager } from "./pen.js";
 import { StickerManager } from "./sticker.js";
+import { PrimitiveManager } from "./primitive.js";
 import type { SceneContext } from "./scene.js";
 import type { EmbedResult } from "./iframe-embed.js";
 import type { ServerMessage, PeerInfo } from "../../shared/protocol.js";
@@ -73,6 +74,7 @@ app.innerHTML = `
       <span class="peer-count" id="peer-count">接続中...</span>
       <button id="pen-toggle" class="pen-toggle" title="ペン描画">&#9998;</button>
       <button id="sticker-toggle" class="sticker-toggle" title="ステッカー">&#128203;</button>
+      <button id="primitive-toggle" class="primitive-toggle" title="プリミティブ">&#9638;</button>
       <button id="settings-toggle" class="settings-toggle" title="設定">&#9881;</button>
     </div>
     <div id="peer-list"></div>
@@ -96,6 +98,7 @@ const embedErrorEl = document.getElementById("embed-error")!;
 const debugLogEl = document.getElementById("debug-log")!;
 const penToggleBtn = document.getElementById("pen-toggle")!;
 const stickerToggleBtn = document.getElementById("sticker-toggle")!;
+const primitiveToggleBtn = document.getElementById("primitive-toggle")!;
 const settingsToggleBtn = document.getElementById("settings-toggle")!;
 const settingsPanel = document.getElementById("settings-panel")!;
 const showAuthorToggle = document.getElementById("show-author-toggle") as HTMLInputElement;
@@ -135,22 +138,31 @@ let chatMgr: ChatManager | null = null;
 let bubbleMgr: ChatBubbleManager | null = null;
 let penMgr: PenManager | null = null;
 let stickerMgr: StickerManager | null = null;
+let primitiveMgr: PrimitiveManager | null = null;
 let penEnabled = false;
 let stickerEnabled = false;
+let primitiveEnabled = false;
 
 // --- Pen toggle ---
 penToggleBtn.addEventListener("click", () => {
   penEnabled = !penEnabled;
   penMgr?.setEnabled(penEnabled);
   penToggleBtn.classList.toggle("active", penEnabled);
-  // Disable sticker mode when pen is enabled
-  if (penEnabled && stickerEnabled) {
-    stickerEnabled = false;
-    stickerMgr?.setEnabled(false);
-    stickerToggleBtn.classList.remove("active");
+  // Disable other modes when pen is enabled
+  if (penEnabled) {
+    if (stickerEnabled) {
+      stickerEnabled = false;
+      stickerMgr?.setEnabled(false);
+      stickerToggleBtn.classList.remove("active");
+    }
+    if (primitiveEnabled) {
+      primitiveEnabled = false;
+      primitiveMgr?.setEnabled(false);
+      primitiveToggleBtn.classList.remove("active");
+    }
   }
   if (sceneCtx) {
-    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled;
+    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled && !primitiveEnabled;
   }
 });
 
@@ -159,14 +171,44 @@ stickerToggleBtn.addEventListener("click", () => {
   stickerEnabled = !stickerEnabled;
   stickerMgr?.setEnabled(stickerEnabled);
   stickerToggleBtn.classList.toggle("active", stickerEnabled);
-  // Disable pen mode when sticker is enabled
-  if (stickerEnabled && penEnabled) {
-    penEnabled = false;
-    penMgr?.setEnabled(false);
-    penToggleBtn.classList.remove("active");
+  // Disable other modes when sticker is enabled
+  if (stickerEnabled) {
+    if (penEnabled) {
+      penEnabled = false;
+      penMgr?.setEnabled(false);
+      penToggleBtn.classList.remove("active");
+    }
+    if (primitiveEnabled) {
+      primitiveEnabled = false;
+      primitiveMgr?.setEnabled(false);
+      primitiveToggleBtn.classList.remove("active");
+    }
   }
   if (sceneCtx) {
-    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled;
+    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled && !primitiveEnabled;
+  }
+});
+
+// --- Primitive toggle (D31) ---
+primitiveToggleBtn.addEventListener("click", () => {
+  primitiveEnabled = !primitiveEnabled;
+  primitiveMgr?.setEnabled(primitiveEnabled);
+  primitiveToggleBtn.classList.toggle("active", primitiveEnabled);
+  // Disable other modes when primitive is enabled
+  if (primitiveEnabled) {
+    if (penEnabled) {
+      penEnabled = false;
+      penMgr?.setEnabled(false);
+      penToggleBtn.classList.remove("active");
+    }
+    if (stickerEnabled) {
+      stickerEnabled = false;
+      stickerMgr?.setEnabled(false);
+      stickerToggleBtn.classList.remove("active");
+    }
+  }
+  if (sceneCtx) {
+    sceneCtx.controls.enabled = !penEnabled && !stickerEnabled && !primitiveEnabled;
   }
 });
 
@@ -339,6 +381,21 @@ function reconcileUI(prev: RoomStateSnapshot, curr: RoomStateSnapshot): void {
     }
   }
 
+  // --- Primitives (D32) ---
+  const prevPrimitiveKeys = new Set(Object.keys(prev.primitives ?? {}));
+  const currPrimitiveKeys = new Set(Object.keys(curr.primitives ?? {}));
+
+  for (const key of currPrimitiveKeys) {
+    if (!prevPrimitiveKeys.has(key)) {
+      primitiveMgr?.renderPrimitive(curr.primitives[key].value);
+    }
+  }
+  for (const key of prevPrimitiveKeys) {
+    if (!currPrimitiveKeys.has(key)) {
+      primitiveMgr?.removePrimitive(key);
+    }
+  }
+
   // --- Scroll ---
   if (curr.scrollPosition.timestamp > prev.scrollPosition.timestamp) {
     scrollSync?.applyRemoteScroll(curr.scrollPosition.value.x, curr.scrollPosition.value.y);
@@ -500,6 +557,9 @@ async function initScene(): Promise<void> {
   const myColor = USER_COLORS[myColorIndex % USER_COLORS.length];
   stickerMgr = new StickerManager(sceneCtx, roomState, myPeerId, myPeerName, myColor);
 
+  // D31: Primitive manager
+  primitiveMgr = new PrimitiveManager(sceneCtx, roomState, myPeerId, myColor);
+
   // D28: Wire sticker placement to server rate limiting
   stickerMgr.setOnStickerPlace(() => {
     signaling.send({ type: "STICKER_ADD" });
@@ -577,6 +637,7 @@ async function restoreStateFromCache(): Promise<void> {
       }
       penMgr?.restoreStrokes();
       stickerMgr?.restoreStickers();
+      primitiveMgr?.restorePrimitives();
       log("State restored from cache");
     }
   } catch {
@@ -652,6 +713,7 @@ window.addEventListener("beforeunload", () => {
   signaling.send({ type: "LEAVE_ROOM" });
   if (broadcastTimer) clearTimeout(broadcastTimer);
   stopStateCacheSync();
+  primitiveMgr?.dispose();
   stickerMgr?.dispose();
   penMgr?.dispose();
   bubbleMgr?.dispose();

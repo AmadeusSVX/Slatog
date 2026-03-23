@@ -9,7 +9,7 @@ import type { RoomState } from "../../shared/room-state.js";
 import type { TextStickerEntry } from "../../shared/data-protocol.js";
 import type { SceneContext } from "./scene.js";
 
-const MAX_STICKER_TEXT = 140;
+const MAX_STICKER_TEXT = 32; // D33: 140→32文字に縮小
 const STICKER_OFFSET = 5; // Z-fighting prevention (same as pen STROKE_CLAMP_OFFSET)
 const CANVAS_PADDING = 16;
 const MAX_CHARS_PER_LINE = 16;
@@ -86,7 +86,7 @@ export class StickerManager {
     this.inputPanel.id = "sticker-input-panel";
     this.inputPanel.style.display = "none";
     this.inputPanel.innerHTML = `
-      <input type="text" id="sticker-text-input" placeholder="ステッカーテキスト（最大140文字）" maxlength="${MAX_STICKER_TEXT}" />
+      <input type="text" id="sticker-text-input" placeholder="ステッカーテキスト（最大32文字）" maxlength="${MAX_STICKER_TEXT}" />
       <div class="sticker-font-size-row">
         <label>フォントサイズ:</label>
         <input type="range" id="sticker-font-size-slider" min="${STICKER_FONT_SIZE_MIN}" max="${STICKER_FONT_SIZE_MAX}" step="${STICKER_FONT_SIZE_STEP}" value="${this.fontSize}" />

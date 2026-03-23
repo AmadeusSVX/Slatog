@@ -530,6 +530,68 @@ body {
   accent-color: #5b8def;
 }
 
+/* --- Primitive toggle button (D31) --- */
+
+.primitive-toggle {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.primitive-toggle:hover {
+  border-color: #5b8def;
+  color: #5b8def;
+}
+
+.primitive-toggle.active {
+  background: #5b8def;
+  color: #fff;
+  border-color: #5b8def;
+}
+
+/* --- Primitive input panel (D31) --- */
+
+#primitive-input-panel {
+  position: fixed;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.primitive-shape-btn {
+  padding: 0.4rem 0.7rem;
+  background: #151520;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.primitive-shape-btn:hover {
+  border-color: #5b8def;
+  color: #5b8def;
+}
+
+.primitive-shape-btn.active {
+  background: #5b8def;
+  color: #fff;
+  border-color: #5b8def;
+}
+
 /* --- D28: Rate limit notice --- */
 
 #sticker-rate-limit-notice {
