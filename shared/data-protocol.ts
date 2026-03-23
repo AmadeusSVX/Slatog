@@ -72,6 +72,7 @@ export interface TextStickerEntry {
   author_name: string;
   color: string; // D15 user color hex
   text: string; // UTF-8, max 140 chars
+  font_size?: number; // D30: font size in px (default 24)
   position: { x: number; y: number; z: number };
   normal: { x: number; y: number; z: number };
   show_author: boolean; // D24

@@ -443,9 +443,34 @@ body {
   font-size: 0.9rem;
 }
 
-#sticker-input-panel input:focus {
+#sticker-input-panel input[type="text"]:focus {
   outline: none;
   border-color: #5b8def;
+}
+
+/* D30: Font size slider row */
+.sticker-font-size-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.sticker-font-size-row label {
+  white-space: nowrap;
+}
+
+.sticker-font-size-row input[type="range"] {
+  flex: 1;
+  accent-color: #5b8def;
+}
+
+.sticker-font-size-row span {
+  min-width: 3em;
+  text-align: right;
+  color: #ccc;
 }
 
 /* --- Settings toggle + panel (D24) --- */

@@ -120,8 +120,8 @@ npm run build      # プロダクションビルド
 │   │   ├── avatar.ts              # D15 アバター3D表示 + ユーザーカラー
 │   │   ├── chat.ts                # D15 チャットUI + ユーザーカラー
 │   │   ├── chat-bubble.ts         # 3D吹き出し（SpriteMaterial + CanvasTexture）
-│   │   ├── pen.ts                 # D15+D17+D21 ペン描画（Line2 + LineMaterial + 壁面クランプ）
-│   │   └── sticker.ts             # D23+D24 テキストステッカー（CanvasTexture + Raycast配置）
+│   │   ├── pen.ts                 # D15+D17+D21+D29 ペン描画（Line2 + LineMaterial + 壁面クランプ + 近距離描画）
+│   │   └── sticker.ts             # D23+D24+D30 テキストステッカー（CanvasTexture + Raycast配置 + フォントサイズ調整）
 │   └── styles.css
 ├── server/
 │   ├── index.ts          # サーバエントリポイント + D20 TTLタイマー
@@ -242,7 +242,12 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] D28: ステッカー連投規制（サーバ側レートリミット）+ 自動BANシステム
 - [x] D28: enforcebudget優先度ベース削除（chat→sticker→stroke→bannedIps）
 
-### Phase 6: 未着手
+### Phase 6: ペン描画距離・フォントサイズ調整（ADR-005）
+
+- [x] D29: ペン描画距離の短縮（Raycaster far=100、空中描画対応、壁面クランプ維持）
+- [x] D30: テキストステッカーフォントサイズ変更（スライダーUI、localStorage保存、CanvasTexture動的計算）
+
+### Phase 7: 未着手
 
 - [ ] 統合テスト + UX改善
 

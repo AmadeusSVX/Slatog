@@ -410,7 +410,11 @@ function handleSignalingMessage(msg: ServerMessage): void {
   }
 }
 
-function handleRoomJoined(id: string, existingPeers: PeerInfo[], host: string): void {
+async function handleRoomJoined(
+  id: string,
+  existingPeers: PeerInfo[],
+  host: string,
+): Promise<void> {
   roomId = id;
   hostPeerId = host;
   log(`Joined room ${roomId} (host: ${host.slice(0, 8)})`);
@@ -430,7 +434,7 @@ function handleRoomJoined(id: string, existingPeers: PeerInfo[], host: string): 
   usedIndices.add(myColorIndex);
 
   updatePeerList();
-  initScene();
+  await initScene();
 
   // D18: Start state cache sync if we are host
   if (hostPeerId === myPeerId) {

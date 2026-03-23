@@ -18,6 +18,10 @@ import { USER_COLORS } from "../../shared/colors.js";
 
 const DEFAULT_LINE_WIDTH = 5; // D17: screen-space pixels
 
+// D29: Maximum draw distance from camera (units). Strokes land on walls if closer,
+// otherwise placed at this distance in the air.
+const PEN_MAX_DRAW_DISTANCE = 2000;
+
 // D21: Z-fighting prevention margin (units inside from wall surface)
 const STROKE_CLAMP_OFFSET = 5;
 
@@ -204,7 +208,9 @@ export class PenManager {
     this.currentPoints = [];
   }
 
-  // D21: Raycast against room wall meshes to find the nearest wall surface hit
+  // D21+D29: Raycast against room wall meshes with limited range.
+  // If wall is within PEN_MAX_DRAW_DISTANCE, stroke lands on wall (D21).
+  // Otherwise, stroke is placed at PEN_MAX_DRAW_DISTANCE along the ray (air drawing).
   private screenToWorld(e: PointerEvent): THREE.Vector3 | null {
     const rect = this.container.getBoundingClientRect();
     const ndc = new THREE.Vector2(
@@ -212,17 +218,25 @@ export class PenManager {
       -((e.clientY - rect.top) / rect.height) * 2 + 1,
     );
     this.raycaster.setFromCamera(ndc, this.camera);
+    // D29: Limit raycast range for near-distance drawing
+    this.raycaster.near = this.camera.near;
+    this.raycaster.far = PEN_MAX_DRAW_DISTANCE;
     const hits = this.raycaster.intersectObjects(this.roomWalls.children, false);
-    if (hits.length === 0) return null;
-    // Offset the hit point slightly toward the camera (inside the room) to prevent z-fighting
-    const hit = hits[0];
-    const offset = hit.face
-      ? hit.face.normal
-          .clone()
-          .transformDirection(hit.object.matrixWorld)
-          .multiplyScalar(STROKE_CLAMP_OFFSET)
-      : new THREE.Vector3();
-    return hit.point.clone().add(offset);
+    if (hits.length > 0) {
+      // Wall hit within range — offset to prevent z-fighting (D21)
+      const hit = hits[0];
+      const offset = hit.face
+        ? hit.face.normal
+            .clone()
+            .transformDirection(hit.object.matrixWorld)
+            .multiplyScalar(STROKE_CLAMP_OFFSET)
+        : new THREE.Vector3();
+      return hit.point.clone().add(offset);
+    }
+    // D29: No wall hit — place stroke at PEN_MAX_DRAW_DISTANCE along ray (air drawing)
+    return this.raycaster.ray.origin
+      .clone()
+      .add(this.raycaster.ray.direction.clone().multiplyScalar(PEN_MAX_DRAW_DISTANCE));
   }
 }
 
