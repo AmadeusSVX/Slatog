@@ -52,8 +52,15 @@ function createGeometry(shape: PrimitiveShape): THREE.BufferGeometry {
   }
 }
 
-// D31: Scale factor — primitives use unit-scale geometry, scaled up for room
-const PRIMITIVE_SCALE = 80;
+// D31: Base scale factor — primitives use unit-scale geometry, scaled up for room
+const PRIMITIVE_BASE_SCALE = 80;
+
+// Scale slider parameters
+const SCALE_MIN = 0.2;
+const SCALE_MAX = 3.0;
+const SCALE_STEP = 0.1;
+const SCALE_DEFAULT = 1.0;
+const LS_KEY_PRIMITIVE_SCALE = "slatog_primitive_scale";
 
 export class PrimitiveManager {
   private scene: THREE.Scene;
@@ -67,10 +74,13 @@ export class PrimitiveManager {
   private primitiveMeshes = new Map<string, THREE.Mesh>();
   private enabled = false;
   private selectedShape: PrimitiveShape = "cube";
+  private scaleValue: number;
 
   // UI elements
   private inputPanel: HTMLElement;
   private shapeButtons: Map<PrimitiveShape, HTMLButtonElement> = new Map();
+  private scaleSlider!: HTMLInputElement;
+  private scaleLabel!: HTMLSpanElement;
   private clickHandler: (e: MouseEvent) => void;
 
   constructor(ctx: SceneContext, roomState: RoomState, myPeerId: string, myColor: string) {
@@ -82,11 +92,21 @@ export class PrimitiveManager {
     this.myColor = myColor;
     this.roomWalls = ctx.roomWalls;
 
+    // Load scale preference
+    const savedScale = parseFloat(localStorage.getItem(LS_KEY_PRIMITIVE_SCALE) ?? "");
+    this.scaleValue =
+      !isNaN(savedScale) && savedScale >= SCALE_MIN && savedScale <= SCALE_MAX
+        ? savedScale
+        : SCALE_DEFAULT;
+
     // Build selection UI
     this.inputPanel = document.createElement("div");
     this.inputPanel.id = "primitive-input-panel";
     this.inputPanel.style.display = "none";
 
+    // Shape buttons row
+    const shapeRow = document.createElement("div");
+    shapeRow.className = "primitive-shape-row";
     for (const shape of SHAPE_LIST) {
       const btn = document.createElement("button");
       btn.className = "primitive-shape-btn";
@@ -96,9 +116,28 @@ export class PrimitiveManager {
         e.stopPropagation();
         this.selectShape(shape);
       });
-      this.inputPanel.appendChild(btn);
+      shapeRow.appendChild(btn);
       this.shapeButtons.set(shape, btn);
     }
+    this.inputPanel.appendChild(shapeRow);
+
+    // Scale slider row
+    const scaleRow = document.createElement("div");
+    scaleRow.className = "primitive-scale-row";
+    scaleRow.innerHTML = `
+      <label>\u30B5\u30A4\u30BA:</label>
+      <input type="range" id="primitive-scale-slider" min="${SCALE_MIN}" max="${SCALE_MAX}" step="${SCALE_STEP}" value="${this.scaleValue}" />
+      <span id="primitive-scale-label">${this.scaleValue.toFixed(1)}x</span>
+    `;
+    this.inputPanel.appendChild(scaleRow);
+
+    this.scaleSlider = this.inputPanel.querySelector("#primitive-scale-slider")!;
+    this.scaleLabel = this.inputPanel.querySelector("#primitive-scale-label")!;
+    this.scaleSlider.addEventListener("input", () => {
+      this.scaleValue = parseFloat(this.scaleSlider.value);
+      this.scaleLabel.textContent = `${this.scaleValue.toFixed(1)}x`;
+      localStorage.setItem(LS_KEY_PRIMITIVE_SCALE, String(this.scaleValue));
+    });
 
     // Prevent scene interaction when clicking panel
     this.inputPanel.addEventListener("pointerdown", (e) => e.stopPropagation());
@@ -120,7 +159,7 @@ export class PrimitiveManager {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
-    this.inputPanel.style.display = enabled ? "flex" : "none";
+    this.inputPanel.style.display = enabled ? "block" : "none";
     if (enabled) {
       this.container.addEventListener("click", this.clickHandler);
       this.container.style.cursor = "crosshair";
@@ -214,6 +253,7 @@ export class PrimitiveManager {
       author_peer_id: this.myPeerId,
       color: this.myColor,
       shape: this.selectedShape,
+      scale: this.scaleValue,
       position: { x: position.x, y: position.y, z: position.z },
       rotation: { x: 0, y: 0, z: 0 },
       timestamp: Date.now(),
@@ -237,7 +277,8 @@ function createPrimitiveMesh(entry: PrimitiveEntry): THREE.Mesh {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(entry.position.x, entry.position.y, entry.position.z);
   mesh.rotation.set(entry.rotation.x, entry.rotation.y, entry.rotation.z);
-  mesh.scale.setScalar(PRIMITIVE_SCALE);
+  const userScale = entry.scale ?? SCALE_DEFAULT;
+  mesh.scale.setScalar(PRIMITIVE_BASE_SCALE * userScale);
 
   return mesh;
 }

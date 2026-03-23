@@ -566,8 +566,35 @@ body {
   border: 1px solid #333;
   border-radius: 6px;
   padding: 0.5rem;
+}
+
+.primitive-shape-row {
   display: flex;
   gap: 0.4rem;
+}
+
+.primitive-scale-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.primitive-scale-row label {
+  white-space: nowrap;
+}
+
+.primitive-scale-row input[type="range"] {
+  flex: 1;
+  accent-color: #5b8def;
+}
+
+.primitive-scale-row span {
+  min-width: 3em;
+  text-align: right;
+  color: #ccc;
 }
 
 .primitive-shape-btn {

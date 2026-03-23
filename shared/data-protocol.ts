@@ -72,6 +72,7 @@ export interface PrimitiveEntry {
   author_peer_id: string;
   color: string; // D15 user color hex
   shape: "cone" | "cube" | "sphere" | "cylinder";
+  scale: number; // uniform scale multiplier (default 1.0)
   position: { x: number; y: number; z: number };
   rotation: { x: number; y: number; z: number }; // Euler angles in radians
   timestamp: number; // Unix ms

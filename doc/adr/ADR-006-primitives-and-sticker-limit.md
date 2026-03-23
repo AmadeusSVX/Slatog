@@ -46,8 +46,12 @@
 
 ┌──────────────────────────────────────┐
 │ [△ 円錐] [□ 立方体] [○ 球] [⊡ 円筒] │
+│ サイズ: [===●=====] 1.0x            │
+│          0.2      3.0               │
 └──────────────────────────────────────┘
   選択中のプリミティブがハイライト表示
+  サイズスライダーで配置時のスケールを調整（0.2x〜3.0x、デフォルト1.0x）
+  スケール値はlocalStorageに保存され次回起動時に復元される
 ```
 
 **配置位置の決定 — Raycast**:
@@ -91,6 +95,7 @@ Primitive {
   author_peer_id: string
   color: string           // D15のユーザーカラー
   shape: "cone" | "cube" | "sphere" | "cylinder"
+  scale: number           // 均一スケール倍率（デフォルト1.0、範囲0.2〜3.0）
   position: {x, y, z}    // 配置座標
   rotation: {x, y, z}    // 姿勢（オイラー角、ラジアン）
   timestamp: number       // Unix ms — LWW用・削除優先度用
@@ -121,15 +126,16 @@ id:              36 bytes (UUID v4)
 author_peer_id:  36 bytes
 color:            7 bytes (#RRGGBB)
 shape:           ~8 bytes (最長 "cylinder")
+scale:           ~4 bytes (数値)
 position:        ~30 bytes ({x,y,z} 数値)
 rotation:        ~30 bytes ({x,y,z} 数値)
 timestamp:       13 bytes
-JSON構造:        ~50 bytes (キー名・区切り文字)
+JSON構造:        ~56 bytes (キー名・区切り文字)
 
-合計: 約210 bytes/プリミティブ
+合計: 約220 bytes/プリミティブ
 ```
 
-63KB共有プールでは、他カテゴリが空の場合に理論上最大約300個を保持可能。
+63KB共有プールでは、他カテゴリが空の場合に理論上最大約293個を保持可能。
 
 **64KBバジェット管理（D5改定の更新）**:
 
@@ -250,6 +256,7 @@ Primitive {
   author_peer_id: string
   color: string           // D15のユーザーカラー
   shape: "cone" | "cube" | "sphere" | "cylinder"
+  scale: number           // 均一スケール倍率（デフォルト1.0、範囲0.2〜3.0）
   position: {x, y, z}    // 配置座標
   rotation: {x, y, z}    // 姿勢（オイラー角、ラジアン）
   timestamp: number       // Unix ms
@@ -287,7 +294,7 @@ Primitive {
   チャットメッセージ:   ~200 bytes
   テキストステッカー:   ~180 bytes（32文字上限、D33で縮小）
   ペンストローク:       可変（ポイント数依存）
-  プリミティブ:         ~210 bytes（D32で追加）
+  プリミティブ:         ~220 bytes（D32で追加、scaleフィールド含む）
 ```
 
 ## 参考
