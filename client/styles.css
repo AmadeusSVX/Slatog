@@ -11,6 +11,11 @@ body {
   background: #0a0a0f;
   color: #e0e0e0;
   min-height: 100vh;
+  overscroll-behavior: none; /* D34: prevent pull-to-refresh on mobile */
+}
+
+html {
+  overscroll-behavior: none; /* D34: prevent pull-to-refresh on mobile */
 }
 
 /* --- Landing page --- */
@@ -199,6 +204,9 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  -webkit-user-select: none; /* D34: prevent text selection on long-press */
+  user-select: none;
+  -webkit-touch-callout: none; /* D34: prevent iOS callout menu */
 }
 
 #status-bar {
@@ -263,6 +271,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: 0;
+  touch-action: none; /* D34: prevent browser touch gestures (scroll, zoom, pull-to-refresh) */
 }
 
 .embed-error {
@@ -295,6 +304,30 @@ body {
   overflow-y: auto;
   z-index: 100;
   border-top: 1px solid #333;
+}
+
+/* --- Chat toggle button (D35) --- */
+
+.chat-toggle {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.chat-toggle:hover {
+  border-color: #5b8def;
+  color: #5b8def;
+}
+
+.chat-toggle.active {
+  background: #5b8def;
+  color: #fff;
+  border-color: #5b8def;
 }
 
 /* --- Pen toggle button --- */
@@ -388,6 +421,8 @@ body {
   background: #151520;
   color: #e0e0e0;
   font-size: 0.85rem;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .chat-input-row input:focus {
@@ -441,6 +476,8 @@ body {
   background: #151520;
   color: #e0e0e0;
   font-size: 0.9rem;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 #sticker-input-panel input[type="text"]:focus {
@@ -632,4 +669,43 @@ body {
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.85rem;
+}
+
+/* --- D35: Responsive UI — mobile (768px and below) --- */
+
+@media (max-width: 768px) {
+  #chat-panel {
+    width: 100%;
+    max-height: 40vh;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    font-size: 0.8rem;
+  }
+
+  .chat-messages {
+    max-height: 25vh;
+  }
+
+  #peer-list {
+    width: 140px;
+    font-size: 0.7rem;
+    top: 36px;
+    max-height: 30vh;
+  }
+
+  #status-bar {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  #sticker-input-panel,
+  #primitive-input-panel,
+  .settings-panel {
+    width: 90vw;
+    max-width: 320px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+  }
 }

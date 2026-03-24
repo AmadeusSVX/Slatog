@@ -112,7 +112,7 @@ npm run build      # プロダクションビルド
 │   ├── room/                # ルームページ（WebRTC接続 + 3D空間 + マルチプレイ）
 │   │   ├── index.html
 │   │   ├── main.ts                # ルームエントリポイント（全モジュール統合）
-│   │   ├── scene.ts               # D16 物理ルーム空間 + Three.js二重レンダラー
+│   │   ├── scene.ts               # D16 物理ルーム空間 + Three.js二重レンダラー + D34 FPSカメラコントローラ
 │   │   ├── iframe-embed.ts        # D12+D13+D16 ハイブリッドiframe壁面埋め込み
 │   │   ├── embed-url.ts           # D13 既知サービスembed URL変換
 │   │   ├── scroll-sync.ts         # D4 スクロール共有（LWW + 100msデバウンス）
@@ -203,7 +203,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] Three.js空間セットアップ（CSS3DRenderer + WebGLRenderer二重構成）
 - [x] depth maskテクニック（FS-2結果反映: colorWrite=false, depthWrite=true, renderOrder=-1）
 - [x] iframe埋め込み（D12ハイブリッド: proxy/check → 直接 or プロキシ経由）
-- [x] カメラ操作（OrbitControls）
+- [x] カメラ操作（D34: Euler角ベースFPSカスタムコントローラ — 視点回転・水平面/スクリーン面併進移動・タッチ対応）
 - [x] スクロール共有（LWW、100msデバウンス、DataChannel state経由）
 - [x] D16: 物理ルーム空間（壁・床・天井 + MeshStandardMaterial + ライティング + カメラ制限）
 - [x] D17: ペンストローク線幅改善（Line2 + LineMaterial、デフォルト5px）
@@ -255,7 +255,12 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] D32: プリミティブのRoomState追加・reliableチャネルでの同期・64KBバジェット管理
 - [x] D33: テキストステッカー文字数制限を140文字→32文字に縮小
 
-### Phase 8: 未着手
+### Phase 8: カメラ操作改善・レスポンシブUI（ADR-007）
+
+- [x] D34: カメラ操作の刷新（OrbitControls廃止、Euler角ベースFPSコントローラ、視点回転・水平面/スクリーン面併進移動・タッチ対応・pull-to-refresh無効化）
+- [x] D35: レスポンシブUI（CSSメディアクエリによるモバイル対応、チャットトグルボタン追加、モバイル初期チャット非表示）
+
+### Phase 9: 未着手
 
 - [ ] 統合テスト + UX改善
 
@@ -269,6 +274,8 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [ADR-004](doc/adr/ADR-004-sticker-fixes.md) — ライティング復元・テキストステッカー改善・荒らし対策
 - [ADR-005](doc/adr/ADR-005-pen-range-and-font-size.md) — ペン描画距離の短縮・テキストステッカーフォントサイズ調整
 - [ADR-006](doc/adr/ADR-006-primitives-and-sticker-limit.md) — プリミティブ配置モードとテキストステッカー文字数制限
+- [ADR-007](doc/adr/ADR-007-camera-responsive.md) — カメラ操作改善とレスポンシブUI
+- [ADR-008](doc/adr/ADR-008-webxr-https.md) — WebXR対応とHTTPS開発環境
 
 ## ライセンス
 

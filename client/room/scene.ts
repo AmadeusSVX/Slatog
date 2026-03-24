@@ -1,14 +1,18 @@
-// Three.js dual-renderer scene setup (D6, FS-2, D16)
+// Three.js dual-renderer scene setup (D6, FS-2, D16, D34)
 // CSS3DRenderer for iframe display + WebGLRenderer for 3D objects (strokes, avatars)
 // Uses depth mask technique for correct occlusion between CSS3D and WebGL layers.
 //
 // D16: Room geometry added around existing coordinate system.
 // Existing coords are UNCHANGED: camera z=1500, iframe z=0, avatars z=600.
 // Room wraps around this space: back wall z=0, front wall z=1600.
+//
+// D34: Custom FPS-style camera controller (OrbitControls removed).
+// Left drag = view rotation, right drag = horizontal translation,
+// middle drag = screen-plane translation, wheel = forward/back translation,
+// 1-finger = rotation, 2-finger = translation + pinch zoom.
 
 import * as THREE from "three";
 import { CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // D16: Room dimensions in CSS-pixel units (matching existing coordinate system)
 // Back wall at z=0 (where iframe lives), extends toward camera (+z).
@@ -23,13 +27,17 @@ const CLAMP_X = [-1450, 1450] as const;
 const CLAMP_Y = [-700, 700] as const;
 const CLAMP_Z = [50, 2350] as const;
 
+export interface CameraControls {
+  enabled: boolean;
+}
+
 export interface SceneContext {
   scene: THREE.Scene;
   cssScene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   webglRenderer: THREE.WebGLRenderer;
   cssRenderer: CSS3DRenderer;
-  controls: OrbitControls;
+  controls: CameraControls;
   container: HTMLElement;
   roomWalls: THREE.Group; // D21: raycast targets for pen drawing on any wall
   dispose(): void;
@@ -48,9 +56,9 @@ export function createScene(container: HTMLElement): SceneContext {
   const scene = new THREE.Scene();
   const cssScene = new THREE.Scene();
 
-  // --- Camera (unchanged) ---
+  // --- Camera (D34: start at room rear for better overview on mobile) ---
   const camera = new THREE.PerspectiveCamera(50, width / height, 1, 5000);
-  camera.position.set(0, 0, 1500);
+  camera.position.set(0, 0, 2300);
 
   // --- CSS3DRenderer (lower layer) ---
   const cssRenderer = new CSS3DRenderer();
@@ -62,7 +70,10 @@ export function createScene(container: HTMLElement): SceneContext {
   container.appendChild(cssRenderer.domElement);
 
   // --- WebGLRenderer (upper layer, transparent) ---
-  const webglRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const webglRenderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+  });
   webglRenderer.setPixelRatio(window.devicePixelRatio);
   webglRenderer.setSize(width, height);
   webglRenderer.domElement.style.position = "absolute";
@@ -72,12 +83,167 @@ export function createScene(container: HTMLElement): SceneContext {
   webglRenderer.domElement.style.pointerEvents = "none";
   container.appendChild(webglRenderer.domElement);
 
-  // --- OrbitControls (unchanged binding) ---
-  const controls = new OrbitControls(camera, cssRenderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.1;
-  controls.minDistance = 500;
-  controls.maxDistance = 4000;
+  // =======================================================================
+  // D34: Custom FPS-style camera controller
+  // =======================================================================
+
+  const controls: CameraControls = { enabled: true };
+
+  // Camera rotation state (Euler YXZ order)
+  let yaw = 0; // Y-axis rotation (horizontal)
+  let pitch = 0; // X-axis rotation (vertical)
+  const PITCH_LIMIT = Math.PI / 2 - 0.01;
+  const ROTATE_SPEED = 0.003;
+  const MOVE_SPEED = 1.5;
+  const WHEEL_SPEED = 0.5;
+
+  function updateCameraRotation(): void {
+    camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, "YXZ"));
+  }
+
+  // --- Mouse ---
+  const domEl = cssRenderer.domElement;
+  let dragButton = -1;
+  let prevMX = 0;
+  let prevMY = 0;
+
+  function onMouseDown(e: MouseEvent): void {
+    if (!controls.enabled) return;
+    if (e.button === 0 || e.button === 1 || e.button === 2) {
+      dragButton = e.button;
+      prevMX = e.clientX;
+      prevMY = e.clientY;
+    }
+  }
+
+  function onMouseMove(e: MouseEvent): void {
+    if (!controls.enabled || dragButton < 0) return;
+    const dx = e.clientX - prevMX;
+    const dy = e.clientY - prevMY;
+    prevMX = e.clientX;
+    prevMY = e.clientY;
+
+    if (dragButton === 0) {
+      // Left button: view rotation (look around in place)
+      yaw -= dx * ROTATE_SPEED;
+      pitch -= dy * ROTATE_SPEED;
+      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
+      updateCameraRotation();
+    } else if (dragButton === 2) {
+      // Right button: horizontal plane translation (XZ based on camera yaw)
+      const fwd = new THREE.Vector3(0, 0, -1);
+      fwd.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+      const rt = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+      camera.position.addScaledVector(rt, -dx * MOVE_SPEED);
+      camera.position.addScaledVector(fwd, dy * MOVE_SPEED);
+    } else if (dragButton === 1) {
+      // Middle button: screen-plane translation (perpendicular to view)
+      const rt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      camera.position.addScaledVector(rt, -dx * MOVE_SPEED);
+      camera.position.addScaledVector(up, dy * MOVE_SPEED);
+    }
+  }
+
+  function onMouseUp(): void {
+    dragButton = -1;
+  }
+
+  // Wheel: forward/backward translation along view direction
+  function onWheel(e: WheelEvent): void {
+    if (!controls.enabled) return;
+    e.preventDefault();
+    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    camera.position.addScaledVector(fwd, -e.deltaY * WHEEL_SPEED);
+  }
+
+  function onContextMenu(e: Event): void {
+    e.preventDefault();
+  }
+
+  // --- Touch ---
+  let touchCount = 0;
+  let prevTX = 0;
+  let prevTY = 0;
+  let pinchDist = 0;
+
+  function touchCenter(ts: TouchList): [number, number] {
+    let x = 0;
+    let y = 0;
+    for (let i = 0; i < ts.length; i++) {
+      x += ts[i].clientX;
+      y += ts[i].clientY;
+    }
+    return [x / ts.length, y / ts.length];
+  }
+
+  function touchDistance(ts: TouchList): number {
+    if (ts.length < 2) return 0;
+    const dx = ts[0].clientX - ts[1].clientX;
+    const dy = ts[0].clientY - ts[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function onTouchStart(e: TouchEvent): void {
+    if (!controls.enabled) return;
+    touchCount = e.touches.length;
+    const [cx, cy] = touchCenter(e.touches);
+    prevTX = cx;
+    prevTY = cy;
+    if (touchCount >= 2) {
+      pinchDist = touchDistance(e.touches);
+    }
+  }
+
+  function onTouchMove(e: TouchEvent): void {
+    if (!controls.enabled) return;
+    e.preventDefault();
+    const [cx, cy] = touchCenter(e.touches);
+    const dx = cx - prevTX;
+    const dy = cy - prevTY;
+    prevTX = cx;
+    prevTY = cy;
+
+    if (e.touches.length === 1) {
+      // 1-finger: view rotation
+      yaw -= dx * ROTATE_SPEED;
+      pitch -= dy * ROTATE_SPEED;
+      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
+      updateCameraRotation();
+    } else if (e.touches.length >= 2) {
+      // 2-finger drag: horizontal plane translation (same as right button)
+      const fwd = new THREE.Vector3(0, 0, -1);
+      fwd.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+      const rt = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+      camera.position.addScaledVector(rt, -dx * MOVE_SPEED);
+      camera.position.addScaledVector(fwd, dy * MOVE_SPEED);
+
+      // Pinch: forward/backward translation along view direction
+      const newDist = touchDistance(e.touches);
+      if (pinchDist > 0 && newDist > 0) {
+        const delta = newDist - pinchDist;
+        const viewFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        camera.position.addScaledVector(viewFwd, delta * MOVE_SPEED);
+      }
+      pinchDist = newDist;
+    }
+  }
+
+  function onTouchEnd(e: TouchEvent): void {
+    touchCount = e.touches.length;
+    if (touchCount === 0) {
+      pinchDist = 0;
+    }
+  }
+
+  domEl.addEventListener("mousedown", onMouseDown);
+  window.addEventListener("mousemove", onMouseMove);
+  window.addEventListener("mouseup", onMouseUp);
+  domEl.addEventListener("wheel", onWheel, { passive: false });
+  domEl.addEventListener("contextmenu", onContextMenu);
+  domEl.addEventListener("touchstart", onTouchStart, { passive: true });
+  domEl.addEventListener("touchmove", onTouchMove, { passive: false });
+  domEl.addEventListener("touchend", onTouchEnd);
 
   // --- D16: Lighting ---
   scene.add(new THREE.AmbientLight(0xffffff, 1.0));
@@ -94,9 +260,7 @@ export function createScene(container: HTMLElement): SceneContext {
   function animate(): void {
     animationId = requestAnimationFrame(animate);
 
-    // D16: Clamp controls target and camera to room bounds
-    clampVec3(controls.target);
-    controls.update();
+    // D16: Clamp camera to room bounds
     clampVec3(camera.position);
 
     webglRenderer.render(scene, camera);
@@ -118,7 +282,14 @@ export function createScene(container: HTMLElement): SceneContext {
   function dispose(): void {
     cancelAnimationFrame(animationId);
     window.removeEventListener("resize", onResize);
-    controls.dispose();
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+    domEl.removeEventListener("mousedown", onMouseDown);
+    domEl.removeEventListener("wheel", onWheel);
+    domEl.removeEventListener("contextmenu", onContextMenu);
+    domEl.removeEventListener("touchstart", onTouchStart);
+    domEl.removeEventListener("touchmove", onTouchMove);
+    domEl.removeEventListener("touchend", onTouchEnd);
     webglRenderer.dispose();
     container.removeChild(webglRenderer.domElement);
     container.removeChild(cssRenderer.domElement);

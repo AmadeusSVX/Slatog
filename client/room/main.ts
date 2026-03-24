@@ -72,6 +72,7 @@ app.innerHTML = `
     <div id="status-bar">
       <span class="room-url-display" title="${escapeHtml(urlKey)}">${escapeHtml(urlKey)}</span>
       <span class="peer-count" id="peer-count">接続中...</span>
+      <button id="chat-toggle" class="chat-toggle" title="チャット">&#128172;</button>
       <button id="pen-toggle" class="pen-toggle" title="ペン描画">&#9998;</button>
       <button id="sticker-toggle" class="sticker-toggle" title="ステッカー">&#128203;</button>
       <button id="primitive-toggle" class="primitive-toggle" title="プリミティブ">&#9638;</button>
@@ -96,6 +97,7 @@ const peerCountEl = document.getElementById("peer-count")!;
 const peerListEl = document.getElementById("peer-list")!;
 const embedErrorEl = document.getElementById("embed-error")!;
 const debugLogEl = document.getElementById("debug-log")!;
+const chatToggleBtn = document.getElementById("chat-toggle")!;
 const penToggleBtn = document.getElementById("pen-toggle")!;
 const stickerToggleBtn = document.getElementById("sticker-toggle")!;
 const primitiveToggleBtn = document.getElementById("primitive-toggle")!;
@@ -210,6 +212,16 @@ primitiveToggleBtn.addEventListener("click", () => {
   if (sceneCtx) {
     sceneCtx.controls.enabled = !penEnabled && !stickerEnabled && !primitiveEnabled;
   }
+});
+
+// --- Chat toggle (D35) ---
+let chatVisible = true;
+chatToggleBtn.addEventListener("click", () => {
+  const chatPanel = document.getElementById("chat-panel");
+  if (!chatPanel) return;
+  chatVisible = !chatVisible;
+  chatPanel.style.display = chatVisible ? "flex" : "none";
+  chatToggleBtn.classList.toggle("active", chatVisible);
 });
 
 // --- Settings toggle (D24) ---
@@ -547,6 +559,15 @@ async function initScene(): Promise<void> {
     chatMgr.setOnNewMessage((msg) => {
       bubbleMgr?.showBubble(msg);
     });
+    // D35: Hide chat panel by default on mobile for better 3D visibility
+    if (window.innerWidth <= 768) {
+      const chatPanel = document.getElementById("chat-panel");
+      if (chatPanel) {
+        chatPanel.style.display = "none";
+        chatVisible = false;
+        chatToggleBtn.classList.remove("active");
+      }
+    }
   } else {
     log("Chat disabled by server configuration");
   }
