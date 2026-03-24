@@ -10,7 +10,8 @@ Slatogは、特定のURLをキーとしてルームを生成し、最大10人の
 - **テキストチャット** — 3Dアバター吹き出し + 2Dチャットウィンドウの二重表示（環境変数でON/OFF切替可能）
 - **テキストステッカー** — 3D空間の壁面にテキストを貼り付けるコミュニケーション手段（最大32文字）
 - **プリミティブ配置** — 3D空間に基本形状（円錐・立方体・球・円筒）を配置
-- **ペン描画** — 3D空間内でのフリーハンド描画（Line2 + LineMaterial、太い線幅対応）
+- **ペン描画** — 3D空間内でのフリーハンド描画（Line2 + LineMaterial、太い線幅対応、VRコントローラ対応）
+- **WebXR VR** — VRヘッドセット（Meta Quest等）でのイマーシブVR体験（コントローラ移動・描画）
 - **アバター移動** — 20Hz更新のリアルタイム位置同期（ユーザーカラー統一）
 - **ユーザー識別** — localStorage永続化によるユーザー名・ID管理
 - **セッション永続化** — サーバサイドステートキャッシュによる状態復元
@@ -112,7 +113,7 @@ npm run build      # プロダクションビルド
 │   ├── room/                # ルームページ（WebRTC接続 + 3D空間 + マルチプレイ）
 │   │   ├── index.html
 │   │   ├── main.ts                # ルームエントリポイント（全モジュール統合）
-│   │   ├── scene.ts               # D16 物理ルーム空間 + Three.js二重レンダラー + D34 FPSカメラコントローラ
+│   │   ├── scene.ts               # D16 物理ルーム空間 + Three.js二重レンダラー + D34 FPSカメラコントローラ + D36 WebXR VR対応
 │   │   ├── iframe-embed.ts        # D12+D13+D16 ハイブリッドiframe壁面埋め込み
 │   │   ├── embed-url.ts           # D13 既知サービスembed URL変換
 │   │   ├── scroll-sync.ts         # D4 スクロール共有（LWW + 100msデバウンス）
@@ -123,7 +124,8 @@ npm run build      # プロダクションビルド
 │   │   ├── chat-bubble.ts         # 3D吹き出し（SpriteMaterial + CanvasTexture）
 │   │   ├── pen.ts                 # D15+D17+D21+D29 ペン描画（Line2 + LineMaterial + 壁面クランプ + 近距離描画）
 │   │   ├── primitive.ts           # D31+D32 プリミティブ配置（Raycast + MeshStandardMaterial + 壁面クランプ）
-│   │   └── sticker.ts             # D23+D24+D30+D33 テキストステッカー（CanvasTexture + Raycast配置 + フォントサイズ調整 + 32文字制限）
+│   │   ├── sticker.ts             # D23+D24+D30+D33 テキストステッカー（CanvasTexture + Raycast配置 + フォントサイズ調整 + 32文字制限）
+│   │   └── vr-controls.ts         # D38+D39 VRコントローラ移動・描画（スティック入力 + トリガーペン描画）
 │   └── styles.css
 ├── server/
 │   ├── index.ts          # サーバエントリポイント + D20 TTLタイマー
@@ -260,7 +262,16 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] D34: カメラ操作の刷新（OrbitControls廃止、Euler角ベースFPSコントローラ、視点回転・水平面/スクリーン面併進移動・タッチ対応・pull-to-refresh無効化）
 - [x] D35: レスポンシブUI（CSSメディアクエリによるモバイル対応、チャットトグルボタン追加、モバイル初期チャット非表示）
 
-### Phase 9: 未着手
+### Phase 9: WebXR対応・HTTPS開発環境（ADR-008/ADR-009）
+
+- [x] D37: HTTPS開発環境（`@vitejs/plugin-basic-ssl`導入、`server.host: true`でLAN公開、ws/wss自動切替）
+- [x] D36: WebXR VRセッション対応（`renderer.xr.enabled`、VRButton、`setAnimationLoop`、VR中2D UI非表示）
+- [x] D38/D42: VRコントローラ移動（左スティック前後移動+左右strafe、右スティック上下移動+ヨー回転、デッドゾーン・delta time対応）
+- [x] D39: VRコントローラ描画（XRControllerModelFactory、レイポインタ、トリガーでペンストローク描画）
+- [x] D40: VRセッション開始時のカメラ位置引き継ぎ（xrRigGroupへの転写）
+- [x] D41: VRコントローラ入力のsetAnimationLoop統合（rAF停止問題の修正）
+
+### Phase 10: 未着手
 
 - [ ] 統合テスト + UX改善
 
@@ -276,6 +287,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [ADR-006](doc/adr/ADR-006-primitives-and-sticker-limit.md) — プリミティブ配置モードとテキストステッカー文字数制限
 - [ADR-007](doc/adr/ADR-007-camera-responsive.md) — カメラ操作改善とレスポンシブUI
 - [ADR-008](doc/adr/ADR-008-webxr-https.md) — WebXR対応とHTTPS開発環境
+- [ADR-009](doc/adr/ADR-009-vr-controls-revised.md) — VRコントローラ操作マッピング改訂
 
 ## ライセンス
 

@@ -26,6 +26,7 @@
     "@types/express": "^5.0.6",
     "@types/three": "^0.183.1",
     "@types/ws": "^8.18.1",
+    "@vitejs/plugin-basic-ssl": "^2.2.0",
     "eslint": "^10.1.0",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",

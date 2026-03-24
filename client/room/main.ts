@@ -18,6 +18,7 @@ import { ChatBubbleManager } from "./chat-bubble.js";
 import { PenManager } from "./pen.js";
 import { StickerManager } from "./sticker.js";
 import { PrimitiveManager } from "./primitive.js";
+import { VRControlsManager } from "./vr-controls.js";
 import type { SceneContext } from "./scene.js";
 import type { EmbedResult } from "./iframe-embed.js";
 import type { ServerMessage, PeerInfo } from "../../shared/protocol.js";
@@ -141,6 +142,7 @@ let bubbleMgr: ChatBubbleManager | null = null;
 let penMgr: PenManager | null = null;
 let stickerMgr: StickerManager | null = null;
 let primitiveMgr: PrimitiveManager | null = null;
+let vrControlsMgr: VRControlsManager | null = null;
 let penEnabled = false;
 let stickerEnabled = false;
 let primitiveEnabled = false;
@@ -582,6 +584,21 @@ async function initScene(): Promise<void> {
   // D31: Primitive manager
   primitiveMgr = new PrimitiveManager(sceneCtx, roomState, myPeerId, myColor);
 
+  // D36/D38/D39: VR controls manager
+  vrControlsMgr = new VRControlsManager(sceneCtx, roomState, myPeerId, myColor);
+  // D41: Register VR frame callback so controller input runs inside setAnimationLoop
+  sceneCtx.setOnVRFrame(() => {
+    vrControlsMgr?.update();
+  });
+  sceneCtx.webglRenderer.xr.addEventListener("sessionstart", () => {
+    vrControlsMgr?.resetTime();
+    // D40: Hide depth mask in VR (CSS3D iframe is not rendered in XR, mask causes black rect)
+    if (embed) embed.depthMask.visible = false;
+  });
+  sceneCtx.webglRenderer.xr.addEventListener("sessionend", () => {
+    if (embed) embed.depthMask.visible = true;
+  });
+
   // D28: Wire sticker placement to server rate limiting
   stickerMgr.setOnStickerPlace(() => {
     signaling.send({ type: "STICKER_ADD" });
@@ -597,7 +614,7 @@ async function initScene(): Promise<void> {
     }
   }
 
-  // Animation loop for avatars and bubbles
+  // Animation loop for avatars and bubbles (VR controls run in setAnimationLoop via D41)
   const camera = sceneCtx.camera;
   function frameLoop(): void {
     avatarMgr?.setLocalPosition(
@@ -753,6 +770,7 @@ window.addEventListener("beforeunload", () => {
   signaling.send({ type: "LEAVE_ROOM" });
   if (broadcastTimer) clearTimeout(broadcastTimer);
   stopStateCacheSync();
+  vrControlsMgr?.dispose();
   primitiveMgr?.dispose();
   stickerMgr?.dispose();
   penMgr?.dispose();

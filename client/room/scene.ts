@@ -1,4 +1,4 @@
-// Three.js dual-renderer scene setup (D6, FS-2, D16, D34)
+// Three.js dual-renderer scene setup (D6, FS-2, D16, D34, D36)
 // CSS3DRenderer for iframe display + WebGLRenderer for 3D objects (strokes, avatars)
 // Uses depth mask technique for correct occlusion between CSS3D and WebGL layers.
 //
@@ -10,9 +10,13 @@
 // Left drag = view rotation, right drag = horizontal translation,
 // middle drag = screen-plane translation, wheel = forward/back translation,
 // 1-finger = rotation, 2-finger = translation + pinch zoom.
+//
+// D36: WebXR VR session support via Three.js WebXRManager.
+// VRButton shows when immersive-vr is supported. setAnimationLoop replaces rAF.
 
 import * as THREE from "three";
 import { CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
+import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 
 // D16: Room dimensions in CSS-pixel units (matching existing coordinate system)
 // Back wall at z=0 (where iframe lives), extends toward camera (+z).
@@ -40,6 +44,9 @@ export interface SceneContext {
   controls: CameraControls;
   container: HTMLElement;
   roomWalls: THREE.Group; // D21: raycast targets for pen drawing on any wall
+  xrRigGroup: THREE.Group; // D36: parent group for VR camera — move this to move the user
+  isInVR(): boolean; // D36: true when an XR session is active
+  setOnVRFrame(cb: (() => void) | null): void; // D41: register callback invoked each XR frame
   dispose(): void;
 }
 
@@ -82,6 +89,57 @@ export function createScene(container: HTMLElement): SceneContext {
   webglRenderer.domElement.style.zIndex = "1";
   webglRenderer.domElement.style.pointerEvents = "none";
   container.appendChild(webglRenderer.domElement);
+
+  // --- D36: WebXR VR support ---
+  webglRenderer.xr.enabled = true;
+
+  // XR Rig Group: parent of the camera. Move this group to move the user in VR.
+  const xrRigGroup = new THREE.Group();
+  xrRigGroup.add(camera);
+  scene.add(xrRigGroup);
+
+  // Add VR button if immersive-vr is supported
+  if (navigator.xr) {
+    navigator.xr.isSessionSupported("immersive-vr").then((supported) => {
+      if (supported) {
+        const vrButton = VRButton.createButton(webglRenderer);
+        document.body.appendChild(vrButton);
+      }
+    });
+  }
+
+  // Track VR session state + D41: VR frame callback
+  let inVR = false;
+  let onVRFrame: (() => void) | null = null;
+
+  webglRenderer.xr.addEventListener("sessionstart", () => {
+    inVR = true;
+    controls.enabled = false;
+    // D40: Transfer desktop camera position to xrRigGroup so user doesn't teleport to origin
+    xrRigGroup.position.copy(camera.position);
+    // Reset camera local position since xrRigGroup now holds the offset
+    camera.position.set(0, 0, 0);
+    // Hide 2D UI overlays in VR mode
+    const uiEls = container.querySelectorAll<HTMLElement>(
+      "#status-bar, #peer-list, #chat-panel, #sticker-input-panel, #primitive-input-panel, #settings-panel, #sticker-rate-limit-notice, #embed-error, #debug-log",
+    );
+    for (const el of uiEls) el.style.display = "none";
+    // Hide CSS3D layer (iframes don't render in VR)
+    cssRenderer.domElement.style.display = "none";
+  });
+  webglRenderer.xr.addEventListener("sessionend", () => {
+    inVR = false;
+    controls.enabled = true;
+    // D40: Transfer xrRigGroup position back to camera for desktop mode
+    camera.position.copy(xrRigGroup.position);
+    xrRigGroup.position.set(0, 0, 0);
+    xrRigGroup.rotation.set(0, 0, 0);
+    // Restore CSS3D layer
+    cssRenderer.domElement.style.display = "";
+    // Restore status bar (always visible)
+    const statusBar = container.querySelector<HTMLElement>("#status-bar");
+    if (statusBar) statusBar.style.display = "";
+  });
 
   // =======================================================================
   // D34: Custom FPS-style camera controller
@@ -254,19 +312,24 @@ export function createScene(container: HTMLElement): SceneContext {
   // --- D16: Room geometry ---
   const roomWalls = buildRoom(scene);
 
-  // --- Animation loop ---
-  let animationId = 0;
+  // --- Animation loop (D36: setAnimationLoop for WebXR compatibility) ---
+  webglRenderer.setAnimationLoop(() => {
+    // D41: Process VR controller input inside the XR frame callback
+    if (inVR && onVRFrame) {
+      onVRFrame();
+    }
 
-  function animate(): void {
-    animationId = requestAnimationFrame(animate);
-
-    // D16: Clamp camera to room bounds
-    clampVec3(camera.position);
+    // D16: Clamp camera to room bounds (skip in VR — XRRigGroup handles position)
+    if (!inVR) {
+      clampVec3(camera.position);
+    }
 
     webglRenderer.render(scene, camera);
-    cssRenderer.render(cssScene, camera);
-  }
-  animate();
+    // CSS3DRenderer is not XR-aware; only render when not in VR
+    if (!inVR) {
+      cssRenderer.render(cssScene, camera);
+    }
+  });
 
   // --- Resize handling ---
   function onResize(): void {
@@ -280,7 +343,7 @@ export function createScene(container: HTMLElement): SceneContext {
   window.addEventListener("resize", onResize);
 
   function dispose(): void {
-    cancelAnimationFrame(animationId);
+    webglRenderer.setAnimationLoop(null);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("mousemove", onMouseMove);
     window.removeEventListener("mouseup", onMouseUp);
@@ -304,6 +367,11 @@ export function createScene(container: HTMLElement): SceneContext {
     controls,
     container,
     roomWalls,
+    xrRigGroup,
+    isInVR: () => inVR,
+    setOnVRFrame: (cb: (() => void) | null) => {
+      onVRFrame = cb;
+    },
     dispose,
   };
 }
