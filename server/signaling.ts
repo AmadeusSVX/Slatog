@@ -173,6 +173,10 @@ function handleJoinRoom(
     const session = store.getSession(roomId)!;
     session.peers.push(peerId);
     session.peerCount = session.peers.length;
+    // D19: Reassign host if session was empty (hostPeerId cleared on last peer leave)
+    if (!session.hostPeerId) {
+      session.hostPeerId = peerId;
+    }
     store.setSession(roomId, session);
   } else {
     // Create new session — this peer becomes host

@@ -18,14 +18,14 @@ import { CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 // Back wall at z=0 (where iframe lives), extends toward camera (+z).
 export const ROOM_W = 3000; // X: -1500 to +1500
 export const ROOM_H = 1500; // Y: -750 to +750
-export const ROOM_D = 2400; // Z: 0 to +2400
+export const ROOM_D = 3600; // Z: 0 to +3600 (D34: extended rear space)
 export const ROOM_BACK_Z = -10; // behind iframe depth mask at z=0
 export const ROOM_FRONT_Z = ROOM_BACK_Z + ROOM_D;
 
 // Camera/target clamp: 50-unit margin from each wall
 const CLAMP_X = [-1450, 1450] as const;
 const CLAMP_Y = [-700, 700] as const;
-const CLAMP_Z = [50, 2350] as const;
+const CLAMP_Z = [50, 3550] as const;
 
 export interface CameraControls {
   enabled: boolean;
@@ -58,7 +58,7 @@ export function createScene(container: HTMLElement): SceneContext {
 
   // --- Camera (D34: start at room rear for better overview on mobile) ---
   const camera = new THREE.PerspectiveCamera(50, width / height, 1, 5000);
-  camera.position.set(0, 0, 2300);
+  camera.position.set(0, 0, 3500);
 
   // --- CSS3DRenderer (lower layer) ---
   const cssRenderer = new CSS3DRenderer();

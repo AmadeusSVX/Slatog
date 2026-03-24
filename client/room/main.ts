@@ -505,14 +505,15 @@ async function handleRoomJoined(
   updatePeerList();
   await initScene();
 
-  // D18: Start state cache sync if we are host
-  if (hostPeerId === myPeerId) {
-    startStateCacheSync();
+  // D19: If no other peers exist, try to restore state from server cache
+  // Must run BEFORE startStateCacheSync to avoid overwriting cached state
+  if (existingPeers.length === 0) {
+    await restoreStateFromCache();
   }
 
-  // D19: If no other peers exist, try to restore state from server cache
-  if (existingPeers.length === 0) {
-    restoreStateFromCache();
+  // D18: Start state cache sync if we are host (after restoration)
+  if (hostPeerId === myPeerId) {
+    startStateCacheSync();
   }
 }
 
@@ -661,8 +662,8 @@ async function restoreStateFromCache(): Promise<void> {
       primitiveMgr?.restorePrimitives();
       log("State restored from cache");
     }
-  } catch {
-    // Silently ignore restore failures
+  } catch (e) {
+    log(`State restore failed: ${e}`);
   }
 }
 
@@ -727,10 +728,28 @@ const checkOpen = setInterval(() => {
   }
 }, 100);
 
+// D18: sendBeacon helper for state cache
+function sendStateCacheBeacon(): void {
+  if (hostPeerId !== myPeerId || !roomId) return;
+  const snapshot = roomState.toSnapshot();
+  const stateJson = JSON.stringify(snapshot);
+  const body = JSON.stringify({ stateJson });
+  navigator.sendBeacon(
+    `${SLATOG_CONFIG.API_BASE}/api/rooms/${roomId}/state`,
+    new Blob([body], { type: "application/json" }),
+  );
+}
+
+// Send state cache when page becomes hidden (tab switch, app switch, closing)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    sendStateCacheBeacon();
+  }
+});
+
 // Cleanup on unload
 window.addEventListener("beforeunload", () => {
-  // D18: Send final state cache before leaving
-  if (hostPeerId === myPeerId) sendStateCache();
+  sendStateCacheBeacon();
   signaling.send({ type: "LEAVE_ROOM" });
   if (broadcastTimer) clearTimeout(broadcastTimer);
   stopStateCacheSync();
