@@ -6,9 +6,10 @@ import { setupSignaling } from "./signaling.js";
 import { setupApi } from "./api.js";
 import { setupProxy } from "./proxy.js";
 import { InMemoryRoomStore } from "./store.js";
+import { appConfig } from "./config.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
-const SESSION_TTL = parseInt(process.env.SLATOG_SESSION_TTL || "-1", 10); // D20
+const SESSION_TTL = appConfig.session.ttlSeconds;
 
 const app = express();
 const server = createServer(app);

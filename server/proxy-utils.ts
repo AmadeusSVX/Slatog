@@ -95,6 +95,14 @@ export function injectBaseTag(html: string, baseUrl: string): string {
 
   const origin = parsed.origin;
 
+  // Strip <meta> CSP tags — HTTP CSP headers are already removed by stripFrameHeaders,
+  // but HTML-embedded CSP can still block our injected nav interceptor script and
+  // prevent external CSS/JS from loading.
+  html = html.replace(
+    /<meta\s[^>]*http-equiv\s*=\s*["']?Content-Security-Policy(?:-Report-Only)?["']?[^>]*>/gi,
+    "",
+  );
+
   const baseTag = `<base href="${escapeHtml(baseHref)}">`;
 
   // Script to intercept navigation + scroll sync via postMessage

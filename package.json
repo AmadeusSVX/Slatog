@@ -4,7 +4,7 @@
   "description": "URL-based multiplayer 3D collaboration room",
   "type": "module",
   "scripts": {
-    "dev": "tsx server/index.ts",
+    "dev": "tsx --env-file-if-exists=.env server/index.ts",
     "dev:client": "vite",
     "build": "vite build",
     "test": "vitest run",

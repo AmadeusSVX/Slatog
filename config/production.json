@@ -1,0 +1,11 @@
+{
+  "session": {
+    "ttlSeconds": 86400
+  },
+  "sticker": {
+    "rateLimit": 3,
+    "ban": {
+      "durationSeconds": 7200
+    }
+  }
+}

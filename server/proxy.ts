@@ -10,13 +10,13 @@ import {
   setCache,
   ProxyError,
 } from "./proxy-utils.js";
+import { appConfig } from "./config.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 10 * 1024 * 1024; // 10MB
 
-// Proxy is OFF by default. Enable with SLATOG_PROXY=1
 function isProxyEnabled(): boolean {
-  return process.env.SLATOG_PROXY === "1";
+  return appConfig.proxy.enabled;
 }
 
 export function setupProxy(app: Express): void {

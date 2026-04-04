@@ -2,6 +2,7 @@
 
 install:
 	npm install
+	@if [ ! -f .env ]; then cp .env.example .env && echo "Created .env from .env.example"; fi
 
 test:
 	npm test

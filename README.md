@@ -7,11 +7,11 @@
 Slatogは、特定のURLをキーとしてルームを生成し、最大10人のユーザーがThree.jsベースの3D空間内で以下のコミュニケーションを行えるWebアプリケーションです:
 
 - **Webページ共同閲覧** — CSS3DRenderer + iframeで壁面にWebページを配置
-- **テキストチャット** — 3Dアバター吹き出し + 2Dチャットウィンドウの二重表示（環境変数でON/OFF切替可能）
+- **テキストチャット** — 3Dアバター吹き出し + 2Dチャットウィンドウの二重表示（設定ファイルでON/OFF切替可能）
 - **テキストステッカー** — 3D空間の壁面にテキストを貼り付けるコミュニケーション手段（最大32文字）
 - **プリミティブ配置** — 3D空間に基本形状（円錐・立方体・球・円筒）を配置
 - **ペン描画** — 3D空間内でのフリーハンド描画（Line2 + LineMaterial、太い線幅対応、VRコントローラ対応）
-- **WebXR VR** — VRヘッドセット（Meta Quest等）でのイマーシブVR体験（コントローラ移動・描画）
+- **WebXR VR** — VRヘッドセット（Meta Quest等）でのイマーシブVR体験（コントローラ移動・描画・iframe閲覧）
 - **アバター移動** — 20Hz更新のリアルタイム位置同期（ユーザーカラー統一）
 - **ユーザー識別** — localStorage永続化によるユーザー名・ID管理
 - **セッション永続化** — サーバサイドステートキャッシュによる状態復元
@@ -30,8 +30,9 @@ Slatogは、特定のURLをキーとしてルームを生成し、最大10人の
 
 - **Node.js + Express + ws** — シグナリング、REST API、静的ファイル配信を単一プロセスで提供
 - **インメモリKVストア** — セッション管理（URL → ルーム群のインデックス付き）+ ステートキャッシュ
-- **リバースプロキシ** — iframe埋め込み不可サイト向けのヘッダー除去プロキシ（`SLATOG_PROXY=1`で有効化）
-- **セッション自動削除** — TTLベースの非アクティブセッション削除（`SLATOG_SESSION_TTL`環境変数）
+- **リバースプロキシ** — iframe埋め込み不可サイト向けのヘッダー除去プロキシ（`config/default.json`で有効化）
+- **セッション自動削除** — TTLベースの非アクティブセッション削除（`config/default.json`で設定）
+- **設定分離** — アプリケーション設定は`config/`ディレクトリのJSONファイル、環境パラメータは`.env`で管理（ADR-011）
 
 ### クライアント
 
@@ -75,21 +76,33 @@ npm run dev:client
 
 開発時はVite devサーバが`/api`と`/signaling`をサーバ（localhost:3000）にプロキシします。
 
-## 環境変数
+## 設定
 
-| 変数                           | デフォルト | 説明                                                 |
-| ------------------------------ | ---------- | ---------------------------------------------------- |
-| `PORT`                         | `3000`     | サーバリッスンポート                                 |
-| `SLATOG_PROXY`                 | (無効)     | `1`に設定でプロキシ有効化                            |
-| `SLATOG_CHAT`                  | `1`        | `0`に設定でチャット機能無効化                        |
-| `SLATOG_SESSION_TTL`           | `-1`       | 非アクティブセッション自動削除までの秒数（-1で無効） |
-| `SLATOG_STATE_SYNC_INTERVAL`   | `30000`    | ステートキャッシュ送信間隔（ms、クライアント側設定） |
-| `SLATOG_STICKER_RATE_WINDOW`   | `30`       | ステッカー連投監視ウィンドウ（秒）                   |
-| `SLATOG_STICKER_RATE_LIMIT`    | `5`        | ウィンドウ内最大ステッカー投稿数                     |
-| `SLATOG_STICKER_BAN_ENABLED`   | `1`        | 自動BAN有効/無効（0で無効）                          |
-| `SLATOG_STICKER_BAN_THRESHOLD` | `2`        | BAN発動までの規制回数                                |
-| `SLATOG_STICKER_BAN_MODE`      | `ban`      | `kick`（再接続可）or `ban`（IP BAN）                 |
-| `SLATOG_STICKER_BAN_DURATION`  | `3600`     | BAN持続時間（秒、0で永久BAN）                        |
+### アプリケーション設定（`config/`ディレクトリ）
+
+アプリの振る舞いを定義する設定は`config/default.json`にデフォルト値が記載され、バージョン管理されます。環境別オーバーライド（`config/production.json`）や開発者個人のオーバーライド（`config/local.json`、Git管理外）でディープマージされます。
+
+| 設定パス                      | デフォルト | 説明                                                 |
+| ----------------------------- | ---------- | ---------------------------------------------------- |
+| `proxy.enabled`               | `true`     | プロキシ有効/無効                                    |
+| `chat.enabled`                | `true`     | チャット機能有効/無効                                |
+| `session.ttlSeconds`          | `-1`       | 非アクティブセッション自動削除までの秒数（-1で無効） |
+| `sticker.rateWindow`          | `30`       | ステッカー連投監視ウィンドウ（秒）                   |
+| `sticker.rateLimit`           | `5`        | ウィンドウ内最大ステッカー投稿数                     |
+| `sticker.ban.enabled`         | `true`     | 自動BAN有効/無効                                     |
+| `sticker.ban.threshold`       | `2`        | BAN発動までの規制回数                                |
+| `sticker.ban.mode`            | `"ban"`    | `"kick"`（再接続可）or `"ban"`（IP BAN）             |
+| `sticker.ban.durationSeconds` | `3600`     | BAN持続時間（秒、0で永久BAN）                        |
+
+### 環境パラメータ（`.env`ファイル）
+
+デプロイ先ごとに異なる値は`.env`ファイルで管理します。`.env.example`をコピーして使用してください。
+
+| 変数   | デフォルト | 説明                 |
+| ------ | ---------- | -------------------- |
+| `PORT` | `3000`     | サーバリッスンポート |
+
+クライアント用の設定（`VITE_API_BASE`等）は引き続きViteの`.env`自動読み込みに従います。
 
 ## コマンド
 
@@ -105,6 +118,10 @@ npm run build      # プロダクションビルド
 ## プロジェクト構成
 
 ```
+├── config/
+│   ├── default.json        # アプリケーション設定デフォルト値（Git管理）
+│   ├── production.json     # 本番環境オーバーライド（Git管理）
+│   └── local.json          # 開発者個人オーバーライド（Git管理外）
 ├── client/
 │   ├── auth.ts              # D14 ユーザー識別（AuthProvider + localStorage）
 │   ├── landing/             # ランディングページ（URL入力 + ルーム一覧）
@@ -114,7 +131,7 @@ npm run build      # プロダクションビルド
 │   │   ├── index.html
 │   │   ├── main.ts                # ルームエントリポイント（全モジュール統合）
 │   │   ├── scene.ts               # D16 物理ルーム空間 + Three.js二重レンダラー + D34 FPSカメラコントローラ + D36 WebXR VR対応
-│   │   ├── iframe-embed.ts        # D12+D13+D16 ハイブリッドiframe壁面埋め込み
+│   │   ├── iframe-embed.ts        # D12+D13+D16+D43 ハイブリッドiframe壁面埋め込み + VR HTMLMesh表示
 │   │   ├── embed-url.ts           # D13 既知サービスembed URL変換
 │   │   ├── scroll-sync.ts         # D4 スクロール共有（LWW + 100msデバウンス）
 │   │   ├── signaling-client.ts    # WebSocketシグナリングクライアント
@@ -125,10 +142,11 @@ npm run build      # プロダクションビルド
 │   │   ├── pen.ts                 # D15+D17+D21+D29 ペン描画（Line2 + LineMaterial + 壁面クランプ + 近距離描画）
 │   │   ├── primitive.ts           # D31+D32 プリミティブ配置（Raycast + MeshStandardMaterial + 壁面クランプ）
 │   │   ├── sticker.ts             # D23+D24+D30+D33 テキストステッカー（CanvasTexture + Raycast配置 + フォントサイズ調整 + 32文字制限）
-│   │   └── vr-controls.ts         # D38+D39 VRコントローラ移動・描画（スティック入力 + トリガーペン描画）
+│   │   └── vr-controls.ts         # D38+D39+D45 VRコントローラ移動・描画・iframeインタラクション（InteractiveGroup）
 │   └── styles.css
 ├── server/
 │   ├── index.ts          # サーバエントリポイント + D20 TTLタイマー
+│   ├── config.ts         # D46 設定ローダー（型定義 + JSON読み込み + マージ）
 │   ├── api.ts            # [B] REST API + D18 ステートキャッシュAPI
 │   ├── signaling.ts      # [C] WebSocketシグナリング + D14 userId
 │   ├── store.ts          # [D] KVストア（D18 stateCache, D20 deleteExpiredSessions）
@@ -184,7 +202,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 | `POST /api/rooms/:roomId/state` | ステートキャッシュ送信（ホストから30秒間隔）            |
 | `GET /api/rooms/:roomId/state`  | ステートキャッシュ取得（セッション復元用）              |
 | `GET /api/proxy/check?url=...`  | URL埋め込み可否チェック                                 |
-| `GET /api/proxy?url=...`        | ヘッダー除去プロキシ（要 `SLATOG_PROXY=1`）             |
+| `GET /api/proxy?url=...`        | ヘッダー除去プロキシ（要 `proxy.enabled: true`）        |
 | `WebSocket /signaling`          | シグナリング（SDP交換、ICE中継）                        |
 
 ## 実装状況
@@ -223,7 +241,7 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] ペンストローク同期（reliableチャネル、3D空間内フリーハンド描画）
 - [x] 途中参加者へのスナップショット送信（チャット履歴・ストローク含む）
 - [x] D18: サーバサイドステートキャッシュ（ホストから30秒間隔で送信）
-- [x] D22: チャット機能トグル（環境変数`SLATOG_CHAT` + features API + クライアント側UI制御）
+- [x] D22: チャット機能トグル（`appConfig.chat.enabled` + features API + クライアント側UI制御）
 - [x] D23: テキストステッカー同期（reliableチャネルでのステッカー送受信）
 
 ### Phase 2への追加（3D空間 + Webページ表示）
@@ -271,7 +289,20 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [x] D40: VRセッション開始時のカメラ位置引き継ぎ（xrRigGroupへの転写）
 - [x] D41: VRコントローラ入力のsetAnimationLoop統合（rAF停止問題の修正）
 
-### Phase 10: 未着手
+### Phase 10: VRモードCSS3D相当表示（ADR-010）— VRボタン無効化中
+
+- [x] D43: iframe contentDocument複製 + HTMLMeshによるVR用表示（実装済み、ただしhtml2canvasの制約によりWebページの正確な描画不可）
+- [x] D44: VRモード時のCSS3DObject ↔ HTMLMesh切替（実装済み）
+- [x] D45: InteractiveGroupによるVRコントローラ→iframeインタラクション（実装済み）
+- **注意**: HTMLMeshのhtml2canvasがFlexbox/Grid/CSS Custom Properties等に非対応のため、VRボタンは無効化。詳細はADR-010「既知の問題」参照
+
+### Phase 11: 設定と環境変数の分離（ADR-011）
+
+- [x] D46: アプリケーション設定ファイル導入（`config/default.json` + `config/production.json` + `server/config.ts`設定ローダー）
+- [x] D46: `process.env.SLATOG_*`参照を`appConfig`に移行（index.ts, signaling.ts, proxy.ts, api.ts）
+- [x] D46: `.env.example`テンプレート + `--env-file`フラグによる環境パラメータ読み込み
+
+### Phase 12: 未着手
 
 - [ ] 統合テスト + UX改善
 
@@ -288,6 +319,8 @@ WebSocket `/signaling` で以下のメッセージを交換します:
 - [ADR-007](doc/adr/ADR-007-camera-responsive.md) — カメラ操作改善とレスポンシブUI
 - [ADR-008](doc/adr/ADR-008-webxr-https.md) — WebXR対応とHTTPS開発環境
 - [ADR-009](doc/adr/ADR-009-vr-controls-revised.md) — VRコントローラ操作マッピング改訂
+- [ADR-010](doc/adr/ADR-010-vr-css3d-equivalent.md) — VRモードにおけるCSS3D相当の表示と操作
+- [ADR-011](doc/adr/ADR-011-env-config.md) — アプリケーション設定と環境変数の分離
 
 ## ライセンス
 

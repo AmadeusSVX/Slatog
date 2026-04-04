@@ -1,0 +1,21 @@
+{
+  "proxy": {
+    "enabled": true
+  },
+  "chat": {
+    "enabled": true
+  },
+  "session": {
+    "ttlSeconds": -1
+  },
+  "sticker": {
+    "rateWindow": 30,
+    "rateLimit": 5,
+    "ban": {
+      "enabled": true,
+      "threshold": 2,
+      "mode": "ban",
+      "durationSeconds": 3600
+    }
+  }
+}

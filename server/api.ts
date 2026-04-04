@@ -3,17 +3,16 @@
 import express from "express";
 import type { Express } from "express";
 import type { RoomStore } from "./store.js";
+import { appConfig } from "./config.js";
 
 const STATE_MAX_SIZE = 65536; // 64KB
 
-// D22: Chat toggle — environment variable (default: enabled)
 function isChatEnabled(): boolean {
-  return process.env.SLATOG_CHAT !== "0";
+  return appConfig.chat.enabled;
 }
 
-// D12: Proxy toggle
 function isProxyEnabled(): boolean {
-  return process.env.SLATOG_PROXY === "1";
+  return appConfig.proxy.enabled;
 }
 
 export function setupApi(app: Express, store: RoomStore): void {

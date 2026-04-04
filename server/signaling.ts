@@ -9,16 +9,17 @@ import { v4 as uuidv4 } from "uuid";
 import type { RoomStore } from "./store.js";
 import type { ClientMessage, ServerMessage, PeerInfo } from "../shared/protocol.js";
 import { MAX_PEERS_PER_ROOM } from "../shared/protocol.js";
+import { appConfig } from "./config.js";
 
 const PING_INTERVAL_MS = 5_000;
 
-// D28: Rate limiting defaults (overridable via env vars)
-const RATE_WINDOW = parseInt(process.env.SLATOG_STICKER_RATE_WINDOW ?? "30", 10) * 1000; // ms
-const RATE_LIMIT = parseInt(process.env.SLATOG_STICKER_RATE_LIMIT ?? "5", 10);
-const BAN_ENABLED = process.env.SLATOG_STICKER_BAN_ENABLED !== "0";
-const BAN_THRESHOLD = parseInt(process.env.SLATOG_STICKER_BAN_THRESHOLD ?? "2", 10);
-const BAN_MODE = (process.env.SLATOG_STICKER_BAN_MODE ?? "ban") as "kick" | "ban";
-const BAN_DURATION = parseInt(process.env.SLATOG_STICKER_BAN_DURATION ?? "3600", 10) * 1000; // ms
+// D28: Rate limiting (configured via config/default.json)
+const RATE_WINDOW = appConfig.sticker.rateWindow * 1000; // ms
+const RATE_LIMIT = appConfig.sticker.rateLimit;
+const BAN_ENABLED = appConfig.sticker.ban.enabled;
+const BAN_THRESHOLD = appConfig.sticker.ban.threshold;
+const BAN_MODE = appConfig.sticker.ban.mode;
+const BAN_DURATION = appConfig.sticker.ban.durationSeconds * 1000; // ms
 
 // D28: In-memory BAN list
 const bannedIps = new Map<string, number>(); // ip → expiry timestamp (0 = permanent until restart)

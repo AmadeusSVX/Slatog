@@ -1,16 +1,19 @@
 // D38/D39/D42: VR controller movement & interaction
+// D45: InteractiveGroup for HTMLMesh iframe interaction in VR
 //
 // D42 revised mapping:
 //   Left stick Y: forward/backward translation
 //   Left stick X: horizontal strafe
-//   Right stick Y: vertical movement (world Y axis)
+//   Right stick Y: vertical movement (world Y axis) / scroll when pointing at iframe
 //   Right stick X: yaw rotation (offset applied to xrRigGroup)
-//   Trigger (selectstart/selectend): pen stroke drawing
+//   Trigger (selectstart/selectend): pen stroke drawing (or iframe click via InteractiveGroup)
 //
 // Controller models displayed via XRControllerModelFactory.
 
 import * as THREE from "three";
 import { XRControllerModelFactory } from "three/examples/jsm/webxr/XRControllerModelFactory.js";
+import { InteractiveGroup } from "three/examples/jsm/interactive/InteractiveGroup.js";
+import type { HTMLMesh } from "three/examples/jsm/interactive/HTMLMesh.js";
 import { v4 as uuidv4 } from "uuid";
 import type { SceneContext } from "./scene.js";
 import type { RoomState } from "../../shared/room-state.js";
@@ -20,6 +23,9 @@ import type { StrokeEntry } from "../../shared/data-protocol.js";
 const MOVE_SPEED = 200; // units per second
 const YAW_SPEED = 1.5; // radians per second
 const DEADZONE = 0.15;
+
+// D45: Scroll parameters for thumbstick → wheel event
+const SCROLL_SPEED = 120; // pixels per tick
 
 // Ray pointer visual
 const RAY_LENGTH = 1500;
@@ -40,6 +46,11 @@ export class VRControlsManager {
   private controller0: THREE.Group;
   private controller1: THREE.Group;
 
+  // D45: InteractiveGroup for HTMLMesh interaction
+  private interactiveGroup: InteractiveGroup;
+  private interactiveMeshes: Map<HTMLMesh, HTMLDivElement> = new Map();
+  private raycaster = new THREE.Raycaster();
+
   // Pen drawing state
   private isDrawing = false;
   private drawingController: THREE.Group | null = null;
@@ -58,25 +69,40 @@ export class VRControlsManager {
     this.penColor = penColor;
 
     // --- Controller grip models ---
+    // Controllers must be children of xrRigGroup so they share the same
+    // coordinate space as the VR camera (which is also a child of xrRigGroup).
+    // Without this, controllers appear at the XR origin (meters) while the
+    // camera is offset by xrRigGroup.position (CSS-pixel units, thousands).
     const controllerModelFactory = new XRControllerModelFactory();
 
     const controllerGrip0 = this.renderer.xr.getControllerGrip(0);
     controllerGrip0.add(controllerModelFactory.createControllerModel(controllerGrip0));
-    this.scene.add(controllerGrip0);
+    this.xrRigGroup.add(controllerGrip0);
 
     const controllerGrip1 = this.renderer.xr.getControllerGrip(1);
     controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-    this.scene.add(controllerGrip1);
+    this.xrRigGroup.add(controllerGrip1);
 
     // --- Controller target ray spaces ---
     this.controller0 = this.renderer.xr.getController(0);
     this.controller1 = this.renderer.xr.getController(1);
-    this.scene.add(this.controller0);
-    this.scene.add(this.controller1);
+    this.xrRigGroup.add(this.controller0);
+    this.xrRigGroup.add(this.controller1);
 
     // Ray pointer visuals
     this.controller0.add(createRayLine());
     this.controller1.add(createRayLine());
+
+    // --- D45: InteractiveGroup for HTMLMesh VR interaction ---
+    this.interactiveGroup = new InteractiveGroup();
+    // getController() returns XRTargetRaySpace at runtime (typed as Group)
+    this.interactiveGroup.listenToXRControllerEvents(
+      this.controller0 as unknown as THREE.XRTargetRaySpace,
+    );
+    this.interactiveGroup.listenToXRControllerEvents(
+      this.controller1 as unknown as THREE.XRTargetRaySpace,
+    );
+    this.scene.add(this.interactiveGroup);
 
     // --- Controller events ---
     this.controller0.addEventListener(
@@ -115,8 +141,14 @@ export class VRControlsManager {
       } else if (source.handedness === "right") {
         const axisX = axes.length > 2 ? axes[2] : 0;
         const axisY = axes.length > 3 ? axes[3] : 0;
-        // D42: Right stick Y = vertical, X = yaw rotation
-        this.applyVerticalMovement(axisY, dt);
+        // D45: If pointing at an interactive mesh, right stick Y scrolls instead of vertical move
+        if (this.interactiveMeshes.size > 0 && this.isPointingAtMesh(this.controller1)) {
+          this.applyScrollToMesh(axisY);
+        } else {
+          // D42: Right stick Y = vertical
+          this.applyVerticalMovement(axisY, dt);
+        }
+        // D42: Right stick X = yaw rotation
         this.applyYawRotation(axisX, dt);
       }
     }
@@ -134,9 +166,42 @@ export class VRControlsManager {
     this.lastTime = 0;
   }
 
+  // D45: Add/remove HTMLMesh to InteractiveGroup for VR interaction
+  addInteractiveMesh(mesh: HTMLMesh, mirror: HTMLDivElement): void {
+    this.interactiveMeshes.set(mesh, mirror);
+    this.interactiveGroup.add(mesh);
+  }
+
+  removeInteractiveMesh(mesh: HTMLMesh): void {
+    this.interactiveMeshes.delete(mesh);
+    this.interactiveGroup.remove(mesh);
+  }
+
   dispose(): void {
-    this.scene.remove(this.controller0);
-    this.scene.remove(this.controller1);
+    this.interactiveGroup.disconnect();
+    this.scene.remove(this.interactiveGroup);
+    this.xrRigGroup.remove(this.controller0);
+    this.xrRigGroup.remove(this.controller1);
+  }
+
+  // --- D45: Mesh interaction helpers ---
+
+  private isPointingAtMesh(controller: THREE.Group): boolean {
+    this.raycaster.setFromXRController(controller as unknown as THREE.XRTargetRaySpace);
+    const meshes = Array.from(this.interactiveMeshes.keys());
+    const intersects = this.raycaster.intersectObjects(meshes, false);
+    return intersects.length > 0;
+  }
+
+  private applyScrollToMesh(axisY: number): void {
+    if (Math.abs(axisY) < DEADZONE) return;
+    for (const [, mirror] of this.interactiveMeshes) {
+      const wheelEvent = new WheelEvent("wheel", {
+        deltaY: axisY * SCROLL_SPEED,
+        bubbles: true,
+      });
+      mirror.dispatchEvent(wheelEvent);
+    }
   }
 
   // --- Movement ---

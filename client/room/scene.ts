@@ -16,7 +16,6 @@
 
 import * as THREE from "three";
 import { CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
-import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 
 // D16: Room dimensions in CSS-pixel units (matching existing coordinate system)
 // Back wall at z=0 (where iframe lives), extends toward camera (+z).
@@ -91,22 +90,15 @@ export function createScene(container: HTMLElement): SceneContext {
   container.appendChild(webglRenderer.domElement);
 
   // --- D36: WebXR VR support ---
+  // VR button disabled: HTMLMesh-based iframe display (D43) does not render web pages
+  // correctly due to html2canvas limitations (no flexbox/grid/custom properties support).
+  // See ADR-010 "既知の問題" section. XR infrastructure kept for future use.
   webglRenderer.xr.enabled = true;
 
   // XR Rig Group: parent of the camera. Move this group to move the user in VR.
   const xrRigGroup = new THREE.Group();
   xrRigGroup.add(camera);
   scene.add(xrRigGroup);
-
-  // Add VR button if immersive-vr is supported
-  if (navigator.xr) {
-    navigator.xr.isSessionSupported("immersive-vr").then((supported) => {
-      if (supported) {
-        const vrButton = VRButton.createButton(webglRenderer);
-        document.body.appendChild(vrButton);
-      }
-    });
-  }
 
   // Track VR session state + D41: VR frame callback
   let inVR = false;

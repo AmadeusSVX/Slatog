@@ -9,7 +9,8 @@ import { SLATOG_CONFIG } from "../../shared/config.js";
 import { SignalingClient } from "./signaling-client.js";
 import { PeerManager } from "./peer-manager.js";
 import { createScene } from "./scene.js";
-import { embedWebPage } from "./iframe-embed.js";
+import { embedWebPage, createVRIframeMesh, createFallbackMesh } from "./iframe-embed.js";
+import type { VRMeshHandle } from "./iframe-embed.js";
 import { ScrollSync } from "./scroll-sync.js";
 import { RoomState } from "../../shared/room-state.js";
 import { AvatarManager } from "./avatar.js";
@@ -143,6 +144,7 @@ let penMgr: PenManager | null = null;
 let stickerMgr: StickerManager | null = null;
 let primitiveMgr: PrimitiveManager | null = null;
 let vrControlsMgr: VRControlsManager | null = null;
+let vrMeshHandle: VRMeshHandle | null = null;
 let penEnabled = false;
 let stickerEnabled = false;
 let primitiveEnabled = false;
@@ -594,9 +596,45 @@ async function initScene(): Promise<void> {
     vrControlsMgr?.resetTime();
     // D40: Hide depth mask in VR (CSS3D iframe is not rendered in XR, mask causes black rect)
     if (embed) embed.depthMask.visible = false;
+
+    // D44: Switch to HTMLMesh for VR display
+    // Try main iframe contentDocument first (same-origin D12 proxy).
+    // If cross-origin, fall back to hidden proxy iframe preloaded in createIframeIn3D.
+    // If proxy iframe also unavailable, show URL placeholder.
+    if (embed) {
+      const vrIframe = embed.iframe.contentDocument
+        ? embed.iframe
+        : embed.proxyIframe?.contentDocument
+          ? embed.proxyIframe
+          : null;
+      const handle = vrIframe
+        ? createVRIframeMesh(vrIframe, embed.cssObject.position.clone())
+        : createFallbackMesh(embed.url, embed.cssObject.position.clone());
+
+      if (handle) {
+        vrMeshHandle = handle;
+        // D45: Add to InteractiveGroup if available
+        if (vrControlsMgr) {
+          vrControlsMgr.addInteractiveMesh(handle.mesh, handle.mirror);
+        } else {
+          sceneCtx!.scene.add(handle.mesh);
+        }
+      }
+    }
   });
   sceneCtx.webglRenderer.xr.addEventListener("sessionend", () => {
     if (embed) embed.depthMask.visible = true;
+
+    // D44: Clean up VR HTMLMesh
+    if (vrMeshHandle) {
+      if (vrControlsMgr) {
+        vrControlsMgr.removeInteractiveMesh(vrMeshHandle.mesh);
+      } else {
+        sceneCtx!.scene.remove(vrMeshHandle.mesh);
+      }
+      vrMeshHandle.dispose();
+      vrMeshHandle = null;
+    }
   });
 
   // D28: Wire sticker placement to server rate limiting
@@ -770,6 +808,7 @@ window.addEventListener("beforeunload", () => {
   signaling.send({ type: "LEAVE_ROOM" });
   if (broadcastTimer) clearTimeout(broadcastTimer);
   stopStateCacheSync();
+  vrMeshHandle?.dispose();
   vrControlsMgr?.dispose();
   primitiveMgr?.dispose();
   stickerMgr?.dispose();

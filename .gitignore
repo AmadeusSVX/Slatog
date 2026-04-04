@@ -8,7 +8,11 @@ dist-ssr/
 # Environment
 .env
 .env.*
+!.env.example
 *.local
+
+# Config overrides
+config/local.json
 
 # Logs
 *.log
